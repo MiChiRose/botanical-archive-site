@@ -19,7 +19,7 @@
   const reduceMedia=matchMedia('(prefers-reduced-motion: reduce)'), hoverMedia=matchMedia('(hover:hover) and (pointer:fine)');
   const g=window.gsap;
   let ready=false, selected=null, mobileIndex=3, manualReduce=false, entrance=null, leaveTimer=null, resizeFrame=null, lastTrigger=null, activeViewer=3;
-  let lastAnnounced=null;
+  let lastAnnounced=null, gesture=null, suppressClickUntil=0;
   const baseX=[-30,-22,-11,0,11,22,30], smallX=[-15,-11,-6,0,6,11,15];
   const baseY=[7.3,4,1.3,0,1.3,4,7.3], scales=[.7756,.8498,.9346,1,.9346,.8498,.7756], rotations=[-21,-14,-7,0,7,14,21], layers=[1,2,3,10,3,2,1];
   const reduced=()=>reduceMedia.matches||manualReduce;
@@ -72,7 +72,7 @@
   }
   function finishEntrance(){
     if(entrance){entrance.kill();entrance=null;}
-    ready=true;stage.dataset.state='ready';arrange(selected,{instant:true});
+    ready=true;stage.dataset.state='ready';arrange(compact()?mobileIndex:selected,{instant:true});
   }
   function reveal(repeat=false){
     clearTimeout(leaveTimer);
@@ -82,7 +82,7 @@
     const poses=geometry();
     cards.forEach((card,i)=>{card.classList.remove('is-active');card.style.zIndex=String(layers[i]);});
     if(reduced()||!g){finishEntrance();return;}
-    entrance=g.timeline({onComplete:()=>{entrance=null;ready=true;stage.dataset.state='ready';}});
+    entrance=g.timeline({onComplete:()=>{entrance=null;ready=true;stage.dataset.state='ready';if(compact())arrange(mobileIndex);}});
     if(repeat)entrance.to(cards,{x:0,y:poses[0].unit*10,rotation:0,scale:1,duration:.38,ease:'power3.inOut',stagger:{amount:.1,from:'center'}});
     else g.set(cards,{x:0,y:poses[0].unit*10,rotation:0,scale:1});
     entrance.to(cards,{y:0,duration:.8,ease:'power2.out',stagger:{amount:.5,from:'end'}})
@@ -93,7 +93,10 @@
     card.addEventListener('pointerenter',event=>{clearTimeout(leaveTimer);if(ready&&!compact()&&hoverMedia.matches&&event.pointerType!=='touch')arrange(i);});
     card.addEventListener('pointerleave',()=>{if(ready&&!compact()&&hoverMedia.matches)leaveTimer=setTimeout(()=>{if(ready&&!viewer.open&&!about.open)arrange(null);},50);});
     card.addEventListener('focus',()=>{if(card.matches(':focus-visible'))select(i,true);});
-    card.addEventListener('click',event=>{select(i,event.detail===0);openViewer(i,card,event.detail===0);});
+    card.addEventListener('click',event=>{
+      const wasSelected=selected===i;select(i,event.detail===0);
+      if(!compact()||wasSelected||event.detail===0)openViewer(i,card,event.detail===0);
+    });
     card.addEventListener('keydown',event=>{
       let next=null;
       if(event.key==='ArrowRight')next=(i+1)%7;
@@ -109,8 +112,40 @@
     arrange(null);
   });
   stage.addEventListener('focusout',event=>{
-    if(!stage.contains(event.relatedTarget)&&!viewer.open&&ready)arrange(null,{instant:true});
+    if(!compact()&&!stage.contains(event.relatedTarget)&&!viewer.open&&ready)arrange(null,{instant:true});
   });
+  // Lock only horizontal gestures; a vertical finger movement remains page scroll.
+  stage.addEventListener('pointerdown',event=>{
+    if(!compact()||!event.isPrimary||event.button!==0)return;
+    gesture={id:event.pointerId,x:event.clientX,y:event.clientY,index:mobileIndex,dx:0,locked:false};
+  });
+  stage.addEventListener('pointermove',event=>{
+    if(!gesture||gesture.id!==event.pointerId)return;
+    const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
+    if(!gesture.locked){
+      if(Math.abs(dy)>12&&Math.abs(dy)>Math.abs(dx)){gesture=null;return;}
+      if(Math.abs(dx)<12||Math.abs(dx)<Math.abs(dy)*1.2)return;
+      gesture.locked=true;select(gesture.index,true);stage.setPointerCapture(event.pointerId);stage.dataset.dragging='true';
+    }
+    gesture.dx=dx;
+    const x=Math.max(-100,Math.min(100,dx*.6));
+    setTransform(cards[gesture.index],{x,y:-12,rotation:x*.055,scale:1.03});
+  });
+  function endGesture(event){
+    if(!gesture||gesture.id!==event.pointerId)return;
+    const previous=gesture;gesture=null;stage.dataset.dragging='false';
+    if(previous.locked){
+      suppressClickUntil=performance.now()+350;
+      const advance=event.type==='pointerup'&&Math.abs(previous.dx)>Math.min(55,innerWidth*.14);
+      select(previous.index+(advance?(previous.dx<0?1:-1):0));
+    }
+    if(stage.hasPointerCapture(event.pointerId))stage.releasePointerCapture(event.pointerId);
+  }
+  stage.addEventListener('pointerup',endGesture);stage.addEventListener('pointercancel',endGesture);
+  stage.addEventListener('lostpointercapture',endGesture);
+  stage.addEventListener('click',event=>{
+    if(performance.now()<suppressClickUntil){event.preventDefault();event.stopImmediatePropagation();suppressClickUntil=0;}
+  },true);
   replay.addEventListener('click',()=>reveal(true));
   function setMotion(){
     document.documentElement.dataset.reduced=String(reduced());

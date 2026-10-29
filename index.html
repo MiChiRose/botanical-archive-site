@@ -6,15 +6,15 @@
   <meta name="theme-color" content="#244653">
   <meta name="description" content="Семь фотографических наблюдений за формой растений. Интерактивный ботанический кабинет.">
   <title>Лист. — У природы свой почерк</title>
-  <link rel="stylesheet" href="style.css?v=6.4">
+  <link rel="stylesheet" href="style.css?v=6.5">
   <script defer src="vendor/gsap.min.js"></script>
   <script defer src="vendor/ScrollTrigger.min.js"></script>
-  <script defer src="app.js?v=6.4"></script>
-  <script defer src="motion.js?v=6.4"></script>
-  <script defer src="research-motion.js?v=6.4"></script>
+  <script defer src="app.js?v=6.5"></script>
+  <script defer src="motion.js?v=6.5"></script>
+  <script defer src="research-motion.js?v=6.5"></script>
   <script defer src="vendor/three-r180.js"></script>
-  <script defer src="journey-path.js?v=6.4"></script>
-  <script defer src="living-hero.js?v=6.4"></script>
+  <script defer src="journey-path.js?v=6.5"></script>
+  <script defer src="living-hero.js?v=6.5"></script>
 </head>
 <body>
   <a class="skip" href="#collection">Перейти к коллекции</a>
@@ -29,7 +29,8 @@
         <img class="living-fallback" src="assets/cobaea.jpg" alt="Фотографический лист с цветком кобеи" width="800" height="1000">
         <canvas class="living-canvas" role="img" aria-label="Интерактивная скульптура цветка: движение указателя проявляет металлические лепестки"></canvas>
         <p class="scene-description">Интерактивная скульптура цветка: указатель проявляет металлические лепестки. После первого экрана цветок перемещается между тремя главами, раскрывается и становится бронзовым.</p>
-        <div class="living-intro"><p class="living-eyebrow">Лист. / Лаборатория формы</p><h1 id="living-title"><span>Живая</span><span>форма.</span></h1><p class="living-description">Проведите по цветку.<br>Откройте другую сторону.</p></div>
+        <div class="living-intro"><p class="living-eyebrow">Лист. / Лаборатория формы</p><h1 id="living-title"><span>Живая</span><span>форма.</span></h1><p class="living-description">Проведите по цветку.<br><span>Откройте другую сторону.</span></p></div>
+        <div class="living-touch-surface" aria-hidden="true"></div>
         <div class="living-after" aria-hidden="true"><span>От отпечатка — к объёму</span><p>Увидеть.<br>Почувствовать.<br>Приблизиться.</p></div>
         <div class="living-coordinate" aria-hidden="true"><span>COBAEA / STUDY 001</span><span class="living-state">Архив ↔ скульптура</span></div>
         <div class="living-bloom">
@@ -104,7 +105,7 @@
         </div>
       </div>
       <div class="collection-controls">
-        <p class="hint"><span class="hint-symbol" aria-hidden="true">✳</span><span class="desktop-hint">Наведите на лист.<br>Нажмите, чтобы рассмотреть.</span><span class="mobile-hint">Выберите лист<br>или листайте стрелками.</span></p>
+        <p class="hint"><span class="hint-symbol" aria-hidden="true">✳</span><span class="desktop-hint">Наведите на лист.<br>Нажмите, чтобы рассмотреть.</span><span class="mobile-hint">Смахните влево или вправо.<br>Нажмите, чтобы рассмотреть.</span></p>
         <div class="selection" aria-live="polite" aria-atomic="true"><span class="selection-name">Смотрите внимательнее</span><span class="selection-latin">В каждой форме — целый мир</span></div>
         <button class="replay-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 1.5 7M4 4v6h6"/></svg><span data-roll>Разложить ещё раз</span></button>
       </div>

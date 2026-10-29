@@ -9,7 +9,9 @@
   const canvas=host.querySelector('canvas'), status=host.querySelector('.living-status');
   const revealButton=host.querySelector('.living-reveal'), finishButton=host.querySelector('.living-finish'), pauseButton=host.querySelector('.living-pause');
   const bloomRange=host.querySelector('.bloom-range'), bloomValue=host.querySelector('.bloom-value'), bloomPlay=host.querySelector('.bloom-play');
-  const bloomPanel=host.querySelector('.living-bloom');
+  const bloomPanel=host.querySelector('.living-bloom'), touchSurface=host.querySelector('.living-touch-surface');
+  const inputEvents=new AbortController();
+  let capturedPointer=null, inputSamples=0;
   const intro=host.querySelector('.living-intro'), after=host.querySelector('.living-after'), rule=host.querySelector('.living-rule>span');
   const heroInterface=[...host.querySelectorAll('.living-controls,.living-bloom,.living-scroll,.living-rule,.living-coordinate')];
   const journey=document.querySelector('.form-journey'), Path=window.BotanicalPath;
@@ -239,7 +241,11 @@
     // a fixed-size model underneath them on short/narrow screens.
     const safeTop=intro.offsetTop+intro.offsetHeight+14, safeBottom=bloomPanel.offsetTop-12;
     mobileCenterY=1-(safeTop+safeBottom)*.5/stageHeight;
-    mobileSize=Math.min(width*.98,Math.max(160,safeBottom-safeTop)/.92);
+    mobileSize=Math.min(width*1.18,Math.max(160,safeBottom-safeTop)/.92);
+    touchSurface.style.top=`${safeTop}px`;touchSurface.style.height=`${Math.max(0,safeBottom-safeTop)}px`;
+    host.dataset.modelSize=mobileSize.toFixed(1);
+    const description=host.querySelector('.living-description');
+    description.firstChild.textContent=width<=700?'Проведите пальцем по цветку.':'Проведите по цветку.';
     const mobile=width<=768, dpr=Math.min(devicePixelRatio||1,mobile?1.25:1.5);
     renderer.setPixelRatio(dpr);renderer.setSize(width,height,false);uniforms.uResolution.value.set(width,height);
     const sw=Math.max(64,Math.round(Math.min(width*.1,192))),sh=Math.max(64,Math.round(sw*height/width));
@@ -278,6 +284,8 @@
     intro.style.opacity=String(fade);intro.style.transform=`translateY(${-p*120}px)`;
     const visible=clamp((p-.4)/.25);after.style.opacity=String(visible);after.style.transform=`translateY(${(1-visible)*30}px)`;after.setAttribute('aria-hidden',String(visible<.5));
     rule.style.transform=`scaleX(${p})`;
+    touchSurface.hidden=width>700||reduced()||paused||travel.active||p>.35;
+    if(touchSurface.hidden)releaseTouch();
     if(paused||reduced())drawOnce();
   }
   function setReveal(){
@@ -320,10 +328,26 @@
     pointer.x=x*2-1;pointer.y=y*2-1;
     if(lastPointer){simulation.inject(x,y,x-lastPointer.x,y-lastPointer.y,1.1);}
     else simulation.inject(x,y,0,0,1.5);
-    lastPointer={x,y};lastInput=performance.now();firstInput=true;idlePointer=null;host.dataset.input='pointer';
+    lastPointer={x,y};lastInput=performance.now();firstInput=true;idlePointer=null;host.dataset.input=event.pointerType||'pointer';host.dataset.inputSamples=String(++inputSamples);
   }
-  stage.addEventListener('pointermove',input,{passive:true});stage.addEventListener('pointerdown',input,{passive:true});
-  stage.addEventListener('pointerleave',()=>{lastPointer=null;});
+  // Only the sculpture's mobile interaction band owns the gesture. The text,
+  // controls and side gutters keep native vertical scrolling and pinch zoom.
+  function releaseTouch(){
+    const id=capturedPointer;capturedPointer=null;
+    if(id!==null&&touchSurface.hasPointerCapture(id))touchSurface.releasePointerCapture(id);
+    lastPointer=null;host.dataset.touchActive='false';
+  }
+  touchSurface.addEventListener('pointerdown',event=>{
+    if(!event.isPrimary||event.button!==0||paused||reduced())return;
+    capturedPointer=event.pointerId;lastPointer=null;touchSurface.setPointerCapture(event.pointerId);
+    host.dataset.touchActive='true';event.preventDefault();
+  },{signal:inputEvents.signal});
+  touchSurface.addEventListener('pointerup',releaseTouch,{signal:inputEvents.signal});
+  touchSurface.addEventListener('pointercancel',releaseTouch,{signal:inputEvents.signal});
+  touchSurface.addEventListener('lostpointercapture',releaseTouch,{signal:inputEvents.signal});
+  stage.addEventListener('pointermove',event=>{if(event.isPrimary!==false)input(event);},{passive:true,signal:inputEvents.signal});
+  stage.addEventListener('pointerdown',event=>{if(event.isPrimary!==false)input(event);},{passive:true,signal:inputEvents.signal});
+  stage.addEventListener('pointerleave',()=>{if(capturedPointer===null)lastPointer=null;},{signal:inputEvents.signal});
   revealButton.addEventListener('pointerenter',event=>{if(event.pointerType==='mouse'){hovering=true;setReveal();}});
   revealButton.addEventListener('pointerleave',()=>{hovering=false;setReveal();});
   revealButton.addEventListener('click',event=>{locked=!locked;hovering=false;if(event.detail===0&&g){g.killTweensOf(state,'reveal');state.reveal=locked?1:0;}setReveal();});
@@ -333,7 +357,7 @@
     else{state.finish=bronze?1:0;drawOnce();}
   });
   pauseButton.addEventListener('click',()=>{
-    paused=!paused;pauseButton.setAttribute('aria-pressed',String(paused));pauseButton.setAttribute('aria-label',paused?'Продолжить движение цветка':'Остановить движение цветка');pauseButton.textContent=paused?'▷':'Ⅱ';
+    paused=!paused;touchSurface.hidden=paused||width>700||reduced()||travel.active||scrollProgress>.35;if(paused)releaseTouch();pauseButton.setAttribute('aria-pressed',String(paused));pauseButton.setAttribute('aria-label',paused?'Продолжить движение цветка':'Остановить движение цветка');pauseButton.textContent=paused?'▷':'Ⅱ';
     if(paused){cancelAnimationFrame(raf);raf=0;stopBloom();g?.killTweensOf(state);state.reveal=locked?1:0;state.finish=bronze?1:0;syncBloom();drawOnce();}else{lastTime=0;start();}
   });
   function updateScene(dt,animate){
@@ -428,7 +452,7 @@
   addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onResize);
   const onVisibility=()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0;bloomTimeline?.pause();}else start();};document.addEventListener('visibilitychange',onVisibility);
   function dispose(){
-    if(disposed)return;disposed=true;cancelAnimationFrame(raf);clearTimeout(resizeTimer);stopBloom();g?.killTweensOf(state);
+    if(disposed)return;releaseTouch();inputEvents.abort();disposed=true;cancelAnimationFrame(raf);clearTimeout(resizeTimer);stopBloom();g?.killTweensOf(state);
     visibility.disconnect();preferences.disconnect();systemReduced.removeEventListener('change',preference);
     removeEventListener('scroll',onScroll);removeEventListener('resize',onResize);document.removeEventListener('visibilitychange',onVisibility);
     targets.forEach(t=>t.dispose());materials.forEach(m=>m.dispose());geometries.forEach(geo=>geo.dispose());photoTexture.dispose();environmentTarget.dispose();pmrem.dispose();renderer.dispose();

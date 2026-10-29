@@ -24,6 +24,14 @@
     animate(element.querySelectorAll('.line-mask > span'),{yPercent:110,rotation:2},{yPercent:0,rotation:0,duration:.9,ease:'power3.out',stagger:.09,clearProps:'transform'});
   }
   function measure(){
+    // Size the shared copy slot from natural child layout, including font/width
+    // changes. Never measure the 100%-height article itself (observer feedback).
+    const copyHeight=Math.ceil(Math.max(...steps.map(step=>{
+      const children=[...step.children];const first=children[0],last=children.at(-1);
+      return last.offsetTop+last.offsetHeight+parseFloat(getComputedStyle(last).marginBottom)-Math.min(0,first.offsetTop);
+    })))+4;
+    const value=`${copyHeight}px`;
+    if(scene.style.getPropertyValue('--story-copy-height')!==value)scene.style.setProperty('--story-copy-height',value);
     start=scene.getBoundingClientRect().top+scrollY;
     distance=Math.max(1,scene.offsetHeight-sticky.offsetHeight);
     if(shortViewport.matches&&!staticScene()){
