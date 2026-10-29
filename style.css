@@ -91,3 +91,24 @@ html[data-reduced=true] .form-journey .journey-anchor img{visibility:visible}htm
  .living-intro h1>span{display:inline}.living-intro h1>span+span:before{content:" "}
  .living-description br,.living-description>span{display:none}
 }
+
+/* v6.2 — stable Safari geometry and touch targets. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.viewport-probe{position:fixed;top:0;left:0;width:0;height:100vh;height:100svh;visibility:hidden;pointer-events:none;overflow:hidden}
+.living-canvas.is-world{bottom:auto;height:100vh;height:100svh}
+.living-stage{overflow:hidden}
+.living-touch-surface{-webkit-touch-callout:none}
+@media(max-width:700px){
+ .living-controls button{min-height:44px;font-size:10px}
+ .living-controls .living-pause{width:44px}
+ .bloom-play{min-height:44px}.living-bloom{bottom:112px}
+ .bloom-range{height:36px;touch-action:none}
+ .fan-stage,.fan-stage .specimen{touch-action:pan-y}
+ .specimen{-webkit-touch-callout:none}
+ .ribbon-toggle{max-width:46%;text-align:right}
+}
+
+body.modal-open{position:fixed;left:0;right:0;width:100%;overflow:hidden}
+dialog{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+
+@media(pointer:coarse) and (min-width:701px){.living-stage{touch-action:pan-y}}

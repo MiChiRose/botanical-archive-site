@@ -3,6 +3,7 @@
  */
 (() => {
   'use strict';
+  const Input=window.BotanicalInput;
   const data = [
     {name:'Хвощ',latin:'Equisetum hiemale',file:'horsetail',plate:'01',id:'225669-equisetum-hiemale',text:'Прямые рёбра, повторяющийся шаг, округлая вершина. Стебель выглядит как архитектурная деталь — и остаётся живой формой.'},
     {name:'Кобея',latin:'Cobaea scandens',file:'cobaea',plate:'74',text:'Лепестки складываются в объёмную чашу. Свет проявляет тонкие прожилки, а край цветка кажется почти вырезанным из бумаги.'},
@@ -19,7 +20,7 @@
   const reduceMedia=matchMedia('(prefers-reduced-motion: reduce)'), hoverMedia=matchMedia('(hover:hover) and (pointer:fine)');
   const g=window.gsap;
   let ready=false, selected=null, mobileIndex=3, manualReduce=false, entrance=null, leaveTimer=null, resizeFrame=null, lastTrigger=null, activeViewer=3;
-  let lastAnnounced=null, gesture=null, suppressClickUntil=0;
+  let lastAnnounced=null, dragIndex=3;
   const baseX=[-30,-22,-11,0,11,22,30], smallX=[-15,-11,-6,0,6,11,15];
   const baseY=[7.3,4,1.3,0,1.3,4,7.3], scales=[.7756,.8498,.9346,1,.9346,.8498,.7756], rotations=[-21,-14,-7,0,7,14,21], layers=[1,2,3,10,3,2,1];
   const reduced=()=>reduceMedia.matches||manualReduce;
@@ -92,10 +93,10 @@
   cards.forEach((card,i)=>{
     card.addEventListener('pointerenter',event=>{clearTimeout(leaveTimer);if(ready&&!compact()&&hoverMedia.matches&&event.pointerType!=='touch')arrange(i);});
     card.addEventListener('pointerleave',()=>{if(ready&&!compact()&&hoverMedia.matches)leaveTimer=setTimeout(()=>{if(ready&&!viewer.open&&!about.open)arrange(null);},50);});
-    card.addEventListener('focus',()=>{if(card.matches(':focus-visible'))select(i,true);});
+    card.addEventListener('focus',()=>{if(Input.keyboardMode()&&card.matches(':focus-visible'))select(i,true);});
     card.addEventListener('click',event=>{
-      const wasSelected=selected===i;select(i,event.detail===0);
-      if(!compact()||wasSelected||event.detail===0)openViewer(i,card,event.detail===0);
+      const wasSelected=selected===i;select(i,Input.keyboard(event));
+      if(!compact()||wasSelected||Input.keyboard(event))openViewer(i,card,Input.keyboard(event));
     });
     card.addEventListener('keydown',event=>{
       let next=null;
@@ -114,38 +115,20 @@
   stage.addEventListener('focusout',event=>{
     if(!compact()&&!stage.contains(event.relatedTarget)&&!viewer.open&&ready)arrange(null,{instant:true});
   });
-  // Lock only horizontal gestures; a vertical finger movement remains page scroll.
-  stage.addEventListener('pointerdown',event=>{
-    if(!compact()||!event.isPrimary||event.button!==0)return;
-    gesture={id:event.pointerId,x:event.clientX,y:event.clientY,index:mobileIndex,dx:0,locked:false};
-  });
-  stage.addEventListener('pointermove',event=>{
-    if(!gesture||gesture.id!==event.pointerId)return;
-    const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
-    if(!gesture.locked){
-      if(Math.abs(dy)>12&&Math.abs(dy)>Math.abs(dx)){gesture=null;return;}
-      if(Math.abs(dx)<12||Math.abs(dx)<Math.abs(dy)*1.2)return;
-      gesture.locked=true;select(gesture.index,true);stage.setPointerCapture(event.pointerId);stage.dataset.dragging='true';
+  const fanGesture=Input.bindDrag(stage,{
+    enabled:compact,
+    onPress:()=>{dragIndex=mobileIndex;},
+    onStart:()=>{select(dragIndex,true);stage.dataset.dragging='true';},
+    onMove:({dx})=>{
+      const x=Math.max(-100,Math.min(100,dx*.6));
+      setTransform(cards[dragIndex],{x,y:-12,rotation:x*.055,scale:1.03});
+    },
+    onEnd:({dx,elapsed,cancelled})=>{
+      stage.dataset.dragging='false';
+      const advance=!cancelled&&(Math.abs(dx)>Math.min(55,innerWidth*.14)||(Math.abs(dx)>22&&Math.abs(dx)/Math.max(1,elapsed)>.45));
+      select(dragIndex+(advance?(dx<0?1:-1):0));
     }
-    gesture.dx=dx;
-    const x=Math.max(-100,Math.min(100,dx*.6));
-    setTransform(cards[gesture.index],{x,y:-12,rotation:x*.055,scale:1.03});
   });
-  function endGesture(event){
-    if(!gesture||gesture.id!==event.pointerId)return;
-    const previous=gesture;gesture=null;stage.dataset.dragging='false';
-    if(previous.locked){
-      suppressClickUntil=performance.now()+350;
-      const advance=event.type==='pointerup'&&Math.abs(previous.dx)>Math.min(55,innerWidth*.14);
-      select(previous.index+(advance?(previous.dx<0?1:-1):0));
-    }
-    if(stage.hasPointerCapture(event.pointerId))stage.releasePointerCapture(event.pointerId);
-  }
-  stage.addEventListener('pointerup',endGesture);stage.addEventListener('pointercancel',endGesture);
-  stage.addEventListener('lostpointercapture',endGesture);
-  stage.addEventListener('click',event=>{
-    if(performance.now()<suppressClickUntil){event.preventDefault();event.stopImmediatePropagation();suppressClickUntil=0;}
-  },true);
   replay.addEventListener('click',()=>reveal(true));
   function setMotion(){
     document.documentElement.dataset.reduced=String(reduced());
@@ -172,8 +155,21 @@
     const parts=[image,viewer.querySelector('.viewer-info')];
     if(g){g.killTweensOf(parts);g.set(parts,{clearProps:'transform,opacity'});if(animate&&!reduced())g.fromTo(parts,{opacity:0,x:direction*12},{opacity:1,x:0,duration:.24,ease:'power3.out',stagger:.035,clearProps:'transform,opacity'});}
   }
+  let modalScroll=null;
+  function lockPage(){
+    if(modalScroll!==null)return;
+    modalScroll=scrollY;document.body.style.top=`${-modalScroll}px`;
+    document.body.classList.add('modal-open');
+  }
+  function unlockPage(){
+    if(viewer.open||about.open||modalScroll===null)return;
+    const y=modalScroll;modalScroll=null;
+    document.body.classList.remove('modal-open');document.body.style.top='';
+    scrollTo({top:y,behavior:'auto'});
+  }
   function showDialog(dialog,instant){
-    dialog.dataset.closing='false';document.body.classList.add('modal-open');dialog.showModal();
+    if(dialog.open)return;
+    dialog.dataset.closing='false';lockPage();dialog.showModal();
     if(g){g.killTweensOf(dialog);g.set(dialog,{clearProps:'opacity,transform'});if(!instant&&!reduced())g.fromTo(dialog,{opacity:0,scale:.975,y:14},{opacity:1,scale:1,y:0,duration:.28,ease:'power3.out',clearProps:'opacity,transform'});}
   }
   function closeDialog(dialog,instant=false){
@@ -183,17 +179,17 @@
     dialog.dataset.closing='true';g.to(dialog,{opacity:0,scale:.985,y:8,duration:.18,ease:'power2.out',onComplete:()=>dialog.close()});
   }
   function openViewer(i,trigger,instant=false){lastTrigger=trigger;updateViewer(i);showDialog(viewer,instant);}
-  document.querySelectorAll('[data-open-specimen]').forEach(button=>button.addEventListener('click',event=>openViewer(Number(button.dataset.openSpecimen),button,event.detail===0)));
-  viewer.querySelector('.close-button').addEventListener('click',event=>closeDialog(viewer,event.detail===0));
-  viewer.querySelector('.viewer-prev').addEventListener('click',event=>updateViewer(activeViewer-1,event.detail!==0,-1));
-  viewer.querySelector('.viewer-next').addEventListener('click',event=>updateViewer(activeViewer+1,event.detail!==0,1));
+  document.querySelectorAll('[data-open-specimen]').forEach(button=>button.addEventListener('click',event=>openViewer(Number(button.dataset.openSpecimen),button,Input.keyboard(event))));
+  viewer.querySelector('.close-button').addEventListener('click',event=>closeDialog(viewer,Input.keyboard(event)));
+  viewer.querySelector('.viewer-prev').addEventListener('click',event=>updateViewer(activeViewer-1,!Input.keyboard(event),-1));
+  viewer.querySelector('.viewer-next').addEventListener('click',event=>updateViewer(activeViewer+1,!Input.keyboard(event),1));
   viewer.addEventListener('keydown',event=>{
     if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();updateViewer(activeViewer+(event.key==='ArrowRight'?1:-1));}
   });
-  viewer.addEventListener('close',()=>{document.body.classList.remove('modal-open');if(lastTrigger?.isConnected)lastTrigger.focus({preventScroll:true});});
-  document.querySelector('[data-about]').addEventListener('click',event=>showDialog(about,event.detail===0));
-  about.querySelector('.close-about').addEventListener('click',event=>closeDialog(about,event.detail===0));
-  about.addEventListener('close',()=>document.body.classList.remove('modal-open'));
+  viewer.addEventListener('close',()=>{unlockPage();if(lastTrigger?.isConnected)lastTrigger.focus({preventScroll:true});});
+  document.querySelector('[data-about]').addEventListener('click',event=>showDialog(about,Input.keyboard(event)));
+  about.querySelector('.close-about').addEventListener('click',event=>closeDialog(about,Input.keyboard(event)));
+  about.addEventListener('close',unlockPage);
   for(const dialog of [viewer,about]){
     dialog.addEventListener('cancel',event=>{event.preventDefault();closeDialog(dialog,true);});
     dialog.addEventListener('close',()=>{dialog.dataset.closing='false';if(g){g.killTweensOf(dialog);g.set(dialog,{clearProps:'opacity,transform'});}});
@@ -204,10 +200,10 @@
   }
   document.querySelector('.picker-prev').addEventListener('click',()=>select(mobileIndex-1));
   document.querySelector('.picker-next').addEventListener('click',()=>select(mobileIndex+1));
-  document.querySelector('.picker-open').addEventListener('click',event=>openViewer(mobileIndex,event.currentTarget,event.detail===0));
+  document.querySelector('.picker-open').addEventListener('click',event=>openViewer(mobileIndex,event.currentTarget,Input.keyboard(event)));
   let lastWidth=innerWidth;
   addEventListener('resize',()=>{
-    if(innerWidth===lastWidth)return;lastWidth=innerWidth;
+    if(innerWidth===lastWidth)return;lastWidth=innerWidth;fanGesture.cancel();
     cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{finishEntrance();arrange(compact()?mobileIndex:selected,{instant:true});});
   });
   document.documentElement.dataset.reduced=String(reduced());
@@ -219,6 +215,6 @@
     if(entries.some(entry=>entry.isIntersecting)){observer.disconnect();reveal();}
   },{threshold:.15});
   observer.observe(stage);
-  addEventListener('pagehide',()=>{observer.disconnect();clearTimeout(leaveTimer);cancelAnimationFrame(resizeFrame);entrance?.kill();g.killTweensOf(cards);});
+  addEventListener('pagehide',()=>{fanGesture.cancel();observer.disconnect();clearTimeout(leaveTimer);cancelAnimationFrame(resizeFrame);entrance?.kill();g.killTweensOf(cards);});
   addEventListener('pageshow',event=>{if(event.persisted)finishEntrance();});
 })();

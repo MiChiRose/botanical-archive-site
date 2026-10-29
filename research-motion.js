@@ -5,6 +5,7 @@
   const g=window.gsap, ST=window.ScrollTrigger;
   if(!g||!ST)return; // Readable vertical HTML is the no-animation fallback.
   g.registerPlugin(ST);
+  ST.config({ignoreMobileResize:true});
   const root=document.documentElement, reduceQuery=matchMedia('(prefers-reduced-motion: reduce)');
   const desktop=matchMedia('(min-width: 992px)'), fine=matchMedia('(hover:hover) and (pointer:fine)');
   const reduced=()=>root.dataset.reduced==='true'||reduceQuery.matches;
@@ -67,7 +68,7 @@
     // Align each panel's start with the same page gutter, clamped at the last panel.
     const distance=Math.max(1,track.scrollWidth-innerWidth);
     const x=panels[i].offsetLeft-panels[0].offsetLeft, p=Math.min(1,x/distance);
-    scrollTo({top:st.start+(st.end-st.start)*p,behavior:'instant'});settleHorizontal();horizontal.progress(p);reveal(panels[i],true);
+    scrollTo({top:st.start+(st.end-st.start)*p,behavior:'auto'});settleHorizontal();horizontal.progress(p);reveal(panels[i],true);
   }
   dots.forEach((dot,i)=>dot.addEventListener('click',()=>jump(i)));
   // Tab must not leave focus in a clipped/offscreen panel while scrub catches up.
@@ -156,7 +157,13 @@
   }
   const preferences=new MutationObserver(setup);preferences.observe(root,{attributes:true,attributeFilter:['data-reduced']});
   desktop.addEventListener('change',setup);reduceQuery.addEventListener('change',setup);
-  addEventListener('resize',()=>{clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{ST.refresh();if(loop)buildLoop();},200);});
+  let resizeWidth=innerWidth,resizeHeight=window.BotanicalInput.viewportHeight();
+  addEventListener('resize',()=>{
+    const height=window.BotanicalInput.viewportHeight();
+    if(resizeWidth===innerWidth&&resizeHeight===height)return;
+    resizeWidth=innerWidth;resizeHeight=height;
+    clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{ST.refresh();if(loop)buildLoop();},200);
+  });
   document.fonts.ready.then(()=>{ST.refresh();if(loop)buildLoop();});
   setup();
   addEventListener('pagehide',()=>{loop?.pause();clearTimeout(refreshTimer);});

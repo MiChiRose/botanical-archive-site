@@ -3,18 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="application-version" content="0.6.2">
   <meta name="theme-color" content="#244653">
   <meta name="description" content="Семь фотографических наблюдений за формой растений. Интерактивный ботанический кабинет.">
   <title>Лист. — У природы свой почерк</title>
-  <link rel="stylesheet" href="style.css?v=6.5">
+  <link rel="stylesheet" href="style.css?v=6.6">
   <script defer src="vendor/gsap.min.js"></script>
   <script defer src="vendor/ScrollTrigger.min.js"></script>
-  <script defer src="app.js?v=6.5"></script>
-  <script defer src="motion.js?v=6.5"></script>
-  <script defer src="research-motion.js?v=6.5"></script>
+  <script defer src="input-runtime.js?v=6.6"></script>
+  <script defer src="app.js?v=6.6"></script>
+  <script defer src="motion.js?v=6.6"></script>
+  <script defer src="research-motion.js?v=6.6"></script>
   <script defer src="vendor/three-r180.js"></script>
-  <script defer src="journey-path.js?v=6.5"></script>
-  <script defer src="living-hero.js?v=6.5"></script>
+  <script defer src="journey-path.js?v=6.6"></script>
+  <script defer src="living-hero.js?v=6.6"></script>
 </head>
 <body>
   <a class="skip" href="#collection">Перейти к коллекции</a>
@@ -23,6 +25,7 @@
     <span class="masthead-note">Кабинет природных форм</span>
     <button class="text-button about-button" data-about><span data-roll>Об этой коллекции</span> <span aria-hidden="true">↗</span></button>
   </header>
+  <div class="viewport-probe" aria-hidden="true"></div>
   <main>
     <section class="living-hero" id="living-form" aria-labelledby="living-title" data-renderer="loading">
       <div class="living-stage">

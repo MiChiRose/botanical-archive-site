@@ -2,6 +2,7 @@
    All animation states have a readable static / reduced-motion equivalent. */
 (() => {
   'use strict';
+  const Input=window.BotanicalInput;
   const gs=window.gsap, root=document.documentElement;
   const scene=document.querySelector('.observation'), sticky=scene.querySelector('.observation-sticky');
   const image=scene.querySelector('.study-window img'), mat=scene.querySelector('.study-mat');
@@ -9,7 +10,7 @@
   const bar=scene.querySelector('.study-progress span');
   const headings=[...document.querySelectorAll('[data-reveal]')];
   const compact=matchMedia('(max-width: 760px)'), systemReduced=matchMedia('(prefers-reduced-motion: reduce)');
-  const shortViewport=matchMedia('(max-height:599px)');
+  const shortViewport={get matches(){return Input.viewportHeight()<600;}};
   const reduced=()=>root.dataset.reduced==='true'||systemReduced.matches;
   const staticScene=()=>reduced()||!gs;
   const clamp=v=>Math.max(0,Math.min(1,v));
@@ -35,7 +36,7 @@
     start=scene.getBoundingClientRect().top+scrollY;
     distance=Math.max(1,scene.offsetHeight-sticky.offsetHeight);
     if(shortViewport.matches&&!staticScene()){
-      const box=scene.querySelector('.study-figure').getBoundingClientRect();start=box.top+scrollY-innerHeight;distance=box.height+innerHeight;
+      const box=scene.querySelector('.study-figure').getBoundingClientRect();start=box.top+scrollY-Input.viewportHeight();distance=box.height+Input.viewportHeight();
     }
     scene.dataset.scrollStart=String(start);scene.dataset.scrollEnd=String(start+distance);
     schedule();
@@ -75,9 +76,9 @@
   }
   buttons.forEach((button,i)=>button.addEventListener('click',event=>{
     if(staticScene())return;
-    scene.dataset.keyboard=String(event.detail===0);
+    scene.dataset.keyboard=String(Input.keyboard(event));
     const p=[.05,.5,.95][i];
-    scrollTo({top:start+distance*p,behavior:event.detail===0||reduced()?'instant':'smooth'});
+    scrollTo({top:start+distance*p,behavior:Input.keyboard(event)||reduced()?'auto':'smooth'});
   }));
   if('IntersectionObserver' in window){
     if(gs&&!reduced()){
@@ -89,8 +90,14 @@
   // Observe the shared motion switch rather than maintaining a second preference.
   const preferenceObserver=new MutationObserver(configure);
   preferenceObserver.observe(root,{attributes:true,attributeFilter:['data-reduced']});
-  compact.addEventListener('change',configure);shortViewport.addEventListener('change',configure);systemReduced.addEventListener('change',configure);
-  addEventListener('scroll',schedule,{passive:true});addEventListener('resize',measure);
+  compact.addEventListener('change',configure);systemReduced.addEventListener('change',configure);
+  let measuredWidth=innerWidth,measuredHeight=Input.viewportHeight();
+  addEventListener('scroll',schedule,{passive:true});
+  addEventListener('resize',()=>{
+    const height=Input.viewportHeight();
+    if(measuredWidth===innerWidth&&measuredHeight===height)return;
+    measuredWidth=innerWidth;measuredHeight=height;configure();
+  });
   addEventListener('wheel',()=>{if(scene.dataset.keyboard==='true')scene.dataset.keyboard='false';},{passive:true});
   const sizeObserver=new ResizeObserver(measure);sizeObserver.observe(scene);sizeObserver.observe(sticky);
   document.fonts.ready.then(measure);
