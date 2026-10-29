@@ -10,10 +10,13 @@
   const canvas=host.querySelector('canvas'), status=host.querySelector('.living-status');
   const revealButton=host.querySelector('.living-reveal'), finishButton=host.querySelector('.living-finish'), pauseButton=host.querySelector('.living-pause');
   const bloomRange=host.querySelector('.bloom-range'), bloomValue=host.querySelector('.bloom-value'), bloomPlay=host.querySelector('.bloom-play');
-  const bloomPanel=host.querySelector('.living-bloom'), touchSurface=host.querySelector('.living-touch-surface');
+  const bloomPanel=host.querySelector('.living-bloom');
   const inputEvents=new AbortController();
-  let fluidGesture, pendingInput=null, pointerEnded=false, inputSamples=0;
+  let pendingInput=null, inputSamples=0;
+  const finePointer=matchMedia('(hover:hover) and (pointer:fine)');
+  const automatic=()=>innerWidth<=768||!finePointer.matches;
   const mobileGpu=matchMedia('(pointer:coarse)').matches||innerWidth<=768;
+  let lastStatFrames=0;
   const intro=host.querySelector('.living-intro'), after=host.querySelector('.living-after'), rule=host.querySelector('.living-rule>span');
   const heroInterface=[...host.querySelectorAll('.living-controls,.living-bloom,.living-scroll,.living-rule,.living-coordinate')];
   const journey=document.querySelector('.form-journey'), Path=window.BotanicalPath;
@@ -102,7 +105,7 @@
     }
     inject(x,y,dx,dy,strength=1){
       const u=this.splat.uniforms;u.point.value.set(x,y);u.aspect.value=width/height;
-      u.radius.value=Math.pow(70/height,2);u.force.value.set(clamp(dx*1900,-180,180),clamp(dy*1900,-180,180),0);u.source.value=this.velocity.read.texture;
+      u.radius.value=Math.pow((automatic()?50:70)/height,2);u.force.value.set(clamp(dx*1900,-180,180),clamp(dy*1900,-180,180),0);u.source.value=this.velocity.read.texture;
       pass(this.splat,this.velocity.write);this.velocity.swap();
       u.force.value.set(strength,0,0);u.source.value=this.dye.read.texture;pass(this.splat,this.dye.write);this.dye.swap();
     }
@@ -238,17 +241,16 @@
 
   function resize(){
     if(disposed)return;
-    fluidGesture?.cancel();
     width=canvas.clientWidth;height=canvas.clientHeight;stageHeight=stage.clientHeight;
     // Reserve actual space for the heading and controls rather than placing
     // a fixed-size model underneath them on short/narrow screens.
     const safeTop=intro.offsetTop+intro.offsetHeight+14, safeBottom=bloomPanel.offsetTop-12;
     mobileCenterY=1-(safeTop+safeBottom)*.5/stageHeight;
     mobileSize=Math.min(width*1.18,Math.max(160,safeBottom-safeTop)/.92);
-    touchSurface.style.top=`${safeTop}px`;touchSurface.style.height=`${Math.max(0,safeBottom-safeTop)}px`;
     host.dataset.modelSize=mobileSize.toFixed(1);
     const description=host.querySelector('.living-description');
-    description.firstChild.textContent=width<=700?'Проведите пальцем по цветку.':'Проведите по цветку.';
+    description.firstChild.textContent=automatic()?'Цветок проявляется сам.':'Проведите по цветку.';
+    host.dataset.inputMode=automatic()?'automatic':'pointer';host.dataset.brushRadius=String(automatic()?50:70);
     const mobile=width<=768, dpr=Math.min(devicePixelRatio||1,mobileGpu?1:1.5);
     renderer.setPixelRatio(dpr);renderer.setSize(width,height,false);uniforms.uResolution.value.set(width,height);
     const sw=Math.max(64,Math.round(Math.min(width*.1,192))),sh=Math.max(64,Math.round(sw*height/width));
@@ -287,8 +289,6 @@
     intro.style.opacity=String(fade);intro.style.transform=`translateY(${-p*120}px)`;
     const visible=clamp((p-.4)/.25);after.style.opacity=String(visible);after.style.transform=`translateY(${(1-visible)*30}px)`;after.setAttribute('aria-hidden',String(visible<.5));
     rule.style.transform=`scaleX(${p})`;
-    touchSurface.hidden=width>700||reduced()||paused||travel.active||p>.35;
-    if(touchSurface.hidden)fluidGesture?.cancel();
     if(paused||reduced())drawOnce();
   }
   function setReveal(){
@@ -325,31 +325,19 @@
       .to(state,{bloom:1,duration:2.6,ease:'sine.inOut'},'+=.18');
   });
   function inputPoint(clientX,clientY,kind){
-    if(disposed||reduced()||paused||travel.active)return;
+    if(automatic()||disposed||reduced()||paused||travel.active)return;
     const rect=canvas.getBoundingClientRect(),x=clamp((clientX-rect.left)/width),y=clamp(1-(clientY-rect.top)/height);
     pointer.x=x*2-1;pointer.y=y*2-1;
     pendingInput={x,y,kind};lastInput=performance.now();firstInput=true;idlePointer=null;
   }
-  // Touch Events are delivered directly on iOS. They do not rely on the
-  // compatibility mouse stream or transfer of implicit pointer capture.
-  const fluidCallbacks={
-    onStart:({x,y,kind})=>{lastPointer=null;pointerEnded=false;host.dataset.touchActive='true';inputPoint(x,y,kind);},
-    onMove:({x,y,kind})=>inputPoint(x,y,kind),
-    onEnd:()=>{pointerEnded=true;host.dataset.touchActive='false';}
-  };
-  const fluidGestures=[
-    Input.bindDrag(touchSurface,{...fluidCallbacks,axis:'both',enabled:()=>!touchSurface.hidden&&!paused&&!reduced()}),
-    // In a wide/landscape layout, horizontal strokes stir the flower and
-    // vertical gestures continue scrolling. Buttons/range never join a drag.
-    Input.bindDrag(stage,{...fluidCallbacks,axis:'x',enabled:event=>event.type==='touchstart'&&width>700&&scrollProgress<.35&&!paused&&!reduced()&&!event.target.closest('.living-controls,.living-bloom,a,button')})
-  ];
-  fluidGesture={cancel:()=>fluidGestures.forEach(gesture=>gesture.cancel()),destroy:()=>fluidGestures.forEach(gesture=>gesture.destroy())};
+  // Mobile uses only the automatic path. There is no touch surface, pointer
+  // capture or touchmove cancellation on the hero; vertical scroll stays native.
   stage.addEventListener('pointermove',event=>{
-    if(event.pointerType==='touch'||event.target.closest('.living-touch-surface,.living-controls,.living-bloom,a,button'))return;
+    if(event.pointerType==='touch'||event.target.closest('.living-controls,.living-bloom,a,button'))return;
     inputPoint(event.clientX,event.clientY,'pointer');
   },{passive:true,signal:inputEvents.signal});
   stage.addEventListener('pointerleave',()=>{lastPointer=null;},{signal:inputEvents.signal});
-  revealButton.addEventListener('pointerenter',event=>{if(event.pointerType==='mouse'){hovering=true;setReveal();}});
+  revealButton.addEventListener('pointerenter',event=>{if(event.pointerType==='mouse'&&!automatic()){hovering=true;setReveal();}});
   revealButton.addEventListener('pointerleave',()=>{hovering=false;setReveal();});
   revealButton.addEventListener('click',event=>{locked=!locked;hovering=false;if(Input.keyboard(event)&&g){g.killTweensOf(state,'reveal');state.reveal=locked?1:0;}setReveal();});
   finishButton.addEventListener('click',event=>{
@@ -358,7 +346,7 @@
     else{state.finish=bronze?1:0;drawOnce();}
   });
   pauseButton.addEventListener('click',()=>{
-    paused=!paused;touchSurface.hidden=paused||width>700||reduced()||travel.active||scrollProgress>.35;if(paused)fluidGesture.cancel();pauseButton.setAttribute('aria-pressed',String(paused));pauseButton.setAttribute('aria-label',paused?'Продолжить движение цветка':'Остановить движение цветка');pauseButton.textContent=paused?'▷':'Ⅱ';
+    paused=!paused;pauseButton.setAttribute('aria-pressed',String(paused));pauseButton.setAttribute('aria-label',paused?'Продолжить движение цветка':'Остановить движение цветка');pauseButton.textContent=paused?'▷':'Ⅱ';
     if(paused){cancelAnimationFrame(raf);raf=0;stopBloom();g?.killTweensOf(state);state.reveal=locked?1:0;state.finish=bronze?1:0;syncBloom();drawOnce();}else{lastTime=0;start();}
   });
   function updateScene(dt,animate){
@@ -367,7 +355,7 @@
     if(pendingInput&&animate){
       const {x,y,kind}=pendingInput;pendingInput=null;
       simulation.inject(x,y,lastPointer?x-lastPointer.x:0,lastPointer?y-lastPointer.y:0,1.5);
-      lastPointer=pointerEnded?null:{x,y};pointerEnded=false;
+      lastPointer={x,y};
       host.dataset.input=kind;host.dataset.inputSamples=String(++inputSamples);
     }
     const p=scrollProgress,mobile=width<=700;
@@ -424,7 +412,10 @@
         const x=uniforms.uCenter.value.x-Math.cos(progress*4*Math.PI)*uniforms.uSize.value.x*.27;
         const y=uniforms.uCenter.value.y+Math.cos(progress*Math.PI)*uniforms.uSize.value.y*.24;
         if(t<2.5||(t>=4&&t<6.5)){
-          simulation.inject(x,y,idlePointer?(x-idlePointer.x):0,idlePointer?(y-idlePointer.y):0,.65);idlePointer={x,y};host.dataset.input='idle';
+          // Dye is a rate (units/second), not a fixed quantity per frame.
+          // Moving from 30 to 60/120Hz must not thicken the automatic trail.
+          const strength=(automatic()?.32:.65)*dt*60;
+          simulation.inject(x,y,idlePointer?(x-idlePointer.x):0,idlePointer?(y-idlePointer.y):0,strength);idlePointer={x,y};host.dataset.input='idle';
         }
       }
       if(!travel.active&&!locked&&state.reveal<.999&&p<.45)simulation.step(dt);
@@ -435,12 +426,12 @@
     if(disposed||!simulation||!modelTarget)return;
     updateScene(dt,animate);renderer.setRenderTarget(modelTarget);renderer.clear();renderer.render(world,camera);pass(compositor,null);
     frames++;
-    if(performance.now()-statTime>1000){host.dataset.frames=String(frames);host.dataset.reveal=state.reveal.toFixed(2);host.dataset.finish=state.finish.toFixed(2);statTime=performance.now();}
+    const now=performance.now();
+    if(now-statTime>1000){host.dataset.fps=((frames-lastStatFrames)*1000/(now-statTime)).toFixed(1);host.dataset.frames=String(frames);host.dataset.reveal=state.reveal.toFixed(2);host.dataset.finish=state.finish.toFixed(2);lastStatFrames=frames;statTime=now;}
   }
   function drawOnce(){if(!disposed&&inView&&!document.hidden&&(paused||reduced()||!raf))render(false);}
   function tick(time){
     raf=0;if(disposed||paused||reduced()||!inView||document.hidden)return;
-    if(mobileGpu&&lastTime&&time-lastTime<1000/30-.5){raf=requestAnimationFrame(tick);return;}
     if(document.body.classList.contains('modal-open')){lastTime=0;raf=requestAnimationFrame(tick);return;}
     const dt=lastTime?Math.min((time-lastTime)/1000,1/20):.014;lastTime=time;clock+=dt;
     render(true,dt);raf=requestAnimationFrame(tick);
@@ -466,9 +457,9 @@
     clearTimeout(resizeTimer);resizeTimer=setTimeout(resize,120);
   };
   addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onResize);
-  const onVisibility=()=>{if(document.hidden){fluidGesture.cancel();pendingInput=null;cancelAnimationFrame(raf);raf=0;bloomTimeline?.pause();}else start();};document.addEventListener('visibilitychange',onVisibility);
+  const onVisibility=()=>{if(document.hidden){pendingInput=null;cancelAnimationFrame(raf);raf=0;bloomTimeline?.pause();}else start();};document.addEventListener('visibilitychange',onVisibility);
   function dispose(){
-    if(disposed)return;fluidGesture?.destroy();inputEvents.abort();cancelAnimationFrame(scrollFrame);disposed=true;cancelAnimationFrame(raf);clearTimeout(resizeTimer);stopBloom();g?.killTweensOf(state);
+    if(disposed)return;inputEvents.abort();cancelAnimationFrame(scrollFrame);disposed=true;cancelAnimationFrame(raf);clearTimeout(resizeTimer);stopBloom();g?.killTweensOf(state);
     visibility.disconnect();preferences.disconnect();systemReduced.removeEventListener('change',preference);
     removeEventListener('scroll',onScroll);removeEventListener('resize',onResize);document.removeEventListener('visibilitychange',onVisibility);
     targets.forEach(t=>t.dispose());materials.forEach(m=>m.dispose());geometries.forEach(geo=>geo.dispose());photoTexture.dispose();environmentTarget.dispose();pmrem.dispose();renderer.dispose();

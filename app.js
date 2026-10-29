@@ -13,22 +13,21 @@
     {name:'Гравилат',latin:'Geum rivale',file:'geum',plate:'12',text:'Тонкие стенки изгибаются, оставляя просветы. Продольные линии и арки превращают небольшую форму в почти архитектурный объём.'},
     {name:'Мак',latin:'Papaver orientale',file:'poppy',plate:'80',text:'Бутон ещё закрыт. Плотная оболочка, тонкие волоски и выступающие края делают его поверхность удивительно сложной.'}
   ];
-  const cards=[...document.querySelectorAll('.specimen')], stage=document.querySelector('.fan-stage');
+  const cards=[...document.querySelectorAll('.specimen')], stage=document.querySelector('.fan-stage'), rail=stage.querySelector('.fan');
   const replay=document.querySelector('.replay-button'), motionButton=document.querySelector('.motion-toggle');
   const name=document.querySelector('.selection-name'), latin=document.querySelector('.selection-latin');
   const viewer=document.querySelector('.viewer'), about=document.querySelector('.about');
   const reduceMedia=matchMedia('(prefers-reduced-motion: reduce)'), hoverMedia=matchMedia('(hover:hover) and (pointer:fine)');
   const g=window.gsap;
   let ready=false, selected=null, mobileIndex=3, manualReduce=false, entrance=null, leaveTimer=null, resizeFrame=null, lastTrigger=null, activeViewer=3;
-  let lastAnnounced=null, dragIndex=3;
-  const baseX=[-30,-22,-11,0,11,22,30], smallX=[-15,-11,-6,0,6,11,15];
+  let lastAnnounced=null, railFrame=0, railTimer=0, railTarget=null;
+  const baseX=[-30,-22,-11,0,11,22,30];
   const baseY=[7.3,4,1.3,0,1.3,4,7.3], scales=[.7756,.8498,.9346,1,.9346,.8498,.7756], rotations=[-21,-14,-7,0,7,14,21], layers=[1,2,3,10,3,2,1];
   const reduced=()=>reduceMedia.matches||manualReduce;
   const compact=()=>innerWidth<=700;
   function geometry(){
-    const unit=compact()?Math.max(5.1,Math.min(7.4,(innerWidth-30)/60)):Math.max(7,Math.min(14,(stage.clientWidth-60)/90));
-    const xs=compact()?smallX:baseX;
-    return cards.map((_,i)=>({x:xs[i]*unit,y:baseY[i]*unit,scale:scales[i],rotation:rotations[i],unit}));
+    const unit=Math.max(7,Math.min(14,(stage.clientWidth-60)/90));
+    return cards.map((_,i)=>({x:baseX[i]*unit,y:baseY[i]*unit,scale:scales[i],rotation:rotations[i],unit}));
   }
   function setTransform(card,props){
     if(g)g.set(card,props);
@@ -49,18 +48,29 @@
       const distance=Math.abs(i-index), weight=1-Math.abs((i-3)/3), coefficient=1+.2*Math.max(0,3-distance);
       if(i===index){p.y-=2.5*base.unit;p.scale*=1.08;}
       else{
-        const spread=(compact()?3.2:8)*weight*coefficient*base.unit;
+        const spread=8*weight*coefficient*base.unit;
         p.x+=i<index?-spread:(i===6?0:spread);
         p.rotation+=Math.sign(i-index)*3/(distance+1);
         if(i>index&&i===6)p.y-=base.unit;
       }
-      // Mobile needs the chosen print above the stack so tap/arrow access is useful.
-      if(compact()&&i===index){p.x=0;p.y=-12;p.rotation=0;p.scale=1.03;}
       return p;
     });
   }
-  function arrange(index,{instant=false}={}){
-    clearTimeout(leaveTimer);selected=index;announce(index);
+  function arrange(index,{instant=false,move=true}={}){
+    clearTimeout(leaveTimer);
+    if(compact()){
+      index=index??mobileIndex;selected=index;announce(index);stage.dataset.layout='rail';
+      if(g&&cards.some(card=>card.style.transform)){g.killTweensOf(cards);g.set(cards,{clearProps:'transform'});}
+      cards.forEach((card,i)=>{card.classList.toggle('is-active',i===index);card.style.zIndex='';});
+      if(move){
+        railTarget=index;
+        const left=cards[index].offsetLeft-(rail.clientWidth-cards[index].offsetWidth)/2;
+        rail.scrollTo({left,behavior:instant||reduced()?'auto':'smooth'});
+        if(instant||reduced()||Math.abs(rail.scrollLeft-left)<2)railTarget=null;
+      }
+      return;
+    }
+    stage.dataset.layout='fan';selected=index;announce(index);
     const poses=targets(index);
     cards.forEach((card,i)=>{
       card.classList.toggle('is-active',i===index);
@@ -77,6 +87,12 @@
   }
   function reveal(repeat=false){
     clearTimeout(leaveTimer);
+    if(compact()){
+      entrance?.kill();entrance=null;ready=true;stage.dataset.state='ready';
+      replay.querySelector('span').textContent='В начало ленты';
+      arrange(0,{instant:!repeat});return;
+    }
+    replay.querySelector('span').textContent='Разложить ещё раз';
     if(entrance)entrance.kill();
     if(g)g.killTweensOf(cards);
     ready=false;selected=null;mobileIndex=3;document.querySelector('.picker-position').textContent='4 / 7';announce(null);stage.dataset.state='entering';
@@ -95,8 +111,8 @@
     card.addEventListener('pointerleave',()=>{if(ready&&!compact()&&hoverMedia.matches)leaveTimer=setTimeout(()=>{if(ready&&!viewer.open&&!about.open)arrange(null);},50);});
     card.addEventListener('focus',()=>{if(Input.keyboardMode()&&card.matches(':focus-visible'))select(i,true);});
     card.addEventListener('click',event=>{
-      const wasSelected=selected===i;select(i,Input.keyboard(event));
-      if(!compact()||wasSelected||Input.keyboard(event))openViewer(i,card,Input.keyboard(event));
+      select(i,Input.keyboard(event));
+      openViewer(i,card,Input.keyboard(event));
     });
     card.addEventListener('keydown',event=>{
       let next=null;
@@ -115,20 +131,28 @@
   stage.addEventListener('focusout',event=>{
     if(!compact()&&!stage.contains(event.relatedTarget)&&!viewer.open&&ready)arrange(null,{instant:true});
   });
-  const fanGesture=Input.bindDrag(stage,{
-    enabled:compact,
-    onPress:()=>{dragIndex=mobileIndex;},
-    onStart:()=>{select(dragIndex,true);stage.dataset.dragging='true';},
-    onMove:({dx})=>{
-      const x=Math.max(-100,Math.min(100,dx*.6));
-      setTransform(cards[dragIndex],{x,y:-12,rotation:x*.055,scale:1.03});
-    },
-    onEnd:({dx,elapsed,cancelled})=>{
-      stage.dataset.dragging='false';
-      const advance=!cancelled&&(Math.abs(dx)>Math.min(55,innerWidth*.14)||(Math.abs(dx)>22&&Math.abs(dx)/Math.max(1,elapsed)>.45));
-      select(dragIndex+(advance?(dx<0?1:-1):0));
+  function syncRail(){
+    railFrame=0;if(!compact())return;
+    if(railTarget!==null){
+      const target=cards[railTarget],left=target.offsetLeft-(rail.clientWidth-target.offsetWidth)/2;
+      if(Math.abs(rail.scrollLeft-left)>2)return;
+      railTarget=null;
     }
-  });
+    const center=rail.scrollLeft+rail.clientWidth/2;
+    let index=0,distance=Infinity;
+    cards.forEach((card,i)=>{const delta=Math.abs(card.offsetLeft+card.offsetWidth/2-center);if(delta<distance){index=i;distance=delta;}});
+    if(index!==selected)arrange(index,{move:false});
+  }
+  rail.addEventListener('scroll',()=>{
+    if(!compact())return;
+    if(!railFrame)railFrame=requestAnimationFrame(syncRail);
+    clearTimeout(railTimer);railTimer=setTimeout(()=>{railTarget=null;syncRail();},160);
+  },{passive:true});
+  // Let the browser own panning and inertia; touching the rail only cancels a
+  // pending arrow destination. No preventDefault, capture, or one-card drag.
+  const touchRail=()=>{railTarget=null;};
+  rail.addEventListener('pointerdown',touchRail,{passive:true});
+  rail.addEventListener('touchstart',touchRail,{passive:true});
   replay.addEventListener('click',()=>reveal(true));
   function setMotion(){
     document.documentElement.dataset.reduced=String(reduced());
@@ -198,23 +222,23 @@
     if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)closeDialog(dialog);
     });
   }
-  document.querySelector('.picker-prev').addEventListener('click',()=>select(mobileIndex-1));
-  document.querySelector('.picker-next').addEventListener('click',()=>select(mobileIndex+1));
+  document.querySelector('.picker-prev').addEventListener('click',event=>select(mobileIndex-1,Input.keyboard(event)));
+  document.querySelector('.picker-next').addEventListener('click',event=>select(mobileIndex+1,Input.keyboard(event)));
   document.querySelector('.picker-open').addEventListener('click',event=>openViewer(mobileIndex,event.currentTarget,Input.keyboard(event)));
   let lastWidth=innerWidth;
   addEventListener('resize',()=>{
-    if(innerWidth===lastWidth)return;lastWidth=innerWidth;fanGesture.cancel();
-    cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{finishEntrance();arrange(compact()?mobileIndex:selected,{instant:true});});
+    if(innerWidth===lastWidth)return;lastWidth=innerWidth;railTarget=null;
+    cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{replay.querySelector('span').textContent=compact()?'В начало ленты':'Разложить ещё раз';finishEntrance();arrange(compact()?mobileIndex:selected,{instant:true});});
   });
   document.documentElement.dataset.reduced=String(reduced());
   motionButton.setAttribute('aria-pressed',String(reduced()));motionButton.disabled=reduceMedia.matches;
   if(!g){finishEntrance();return;}
   // The fallback CSS is already readable. Only enhance once script is ready.
-  g.set(cards,{x:0,y:geometry()[0].unit*10,rotation:0,scale:1});
+  if(compact())reveal();else g.set(cards,{x:0,y:geometry()[0].unit*10,rotation:0,scale:1});
   const observer=new IntersectionObserver(entries=>{
     if(entries.some(entry=>entry.isIntersecting)){observer.disconnect();reveal();}
   },{threshold:.15});
-  observer.observe(stage);
-  addEventListener('pagehide',()=>{fanGesture.cancel();observer.disconnect();clearTimeout(leaveTimer);cancelAnimationFrame(resizeFrame);entrance?.kill();g.killTweensOf(cards);});
+  if(!compact())observer.observe(stage);
+  addEventListener('pagehide',()=>{clearTimeout(railTimer);cancelAnimationFrame(railFrame);observer.disconnect();clearTimeout(leaveTimer);cancelAnimationFrame(resizeFrame);entrance?.kill();g.killTweensOf(cards);});
   addEventListener('pageshow',event=>{if(event.persisted)finishEntrance();});
 })();

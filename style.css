@@ -70,7 +70,6 @@ html[data-reduced=true] .form-journey .journey-anchor img{visibility:visible}htm
 @media(max-width:991px){.note:hover .note-open{transform:none}}
 
 /* v6.1 — touch ownership, generous mobile framing and exclusive copy states. */
-.living-touch-surface{display:none}
 .observation:not(.is-static):not(.is-flow-motion) .story-steps{min-height:var(--story-copy-height,245px)}
 .story-step{visibility:hidden}
 .story-step.is-current{visibility:visible}
@@ -81,10 +80,7 @@ html[data-reduced=true] .form-journey .journey-anchor img{visibility:visible}htm
  .living-description{max-width:32ch}
  .living-bloom{bottom:112px}.living-controls{bottom:48px}
  .living-scroll{bottom:10px}.living-rule{display:none}.living-coordinate{display:none}
- .living-touch-surface:not([hidden]){display:block;position:absolute;left:24px;right:24px;z-index:2;touch-action:none;user-select:none;-webkit-user-select:none}
- .living-hero:not([data-ready=true]) .living-touch-surface{display:none}
  .fan-stage,.fan-stage .specimen{touch-action:pan-y pinch-zoom;user-select:none;-webkit-user-select:none}
- .fan-stage[data-dragging=true]{cursor:grabbing}
 }
 @media(max-width:700px) and (max-height:700px){
  .living-intro{top:92px}.living-intro h1{font-size:clamp(35px,10.6vw,53px);white-space:nowrap}
@@ -97,7 +93,6 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .viewport-probe{position:fixed;top:0;left:0;width:0;height:100vh;height:100svh;visibility:hidden;pointer-events:none;overflow:hidden}
 .living-canvas.is-world{bottom:auto;height:100vh;height:100svh}
 .living-stage{overflow:hidden}
-.living-touch-surface{-webkit-touch-callout:none}
 @media(max-width:700px){
  .living-controls button{min-height:44px;font-size:10px}
  .living-controls .living-pause{width:44px}
@@ -111,4 +106,13 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body.modal-open{position:fixed;left:0;right:0;width:100%;overflow:hidden}
 dialog{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 
-@media(pointer:coarse) and (min-width:701px){.living-stage{touch-action:pan-y}}
+
+/* v6.3 — a native mobile rail; the desktop fan keeps its original geometry. */
+@media(max-width:700px){
+ :root{--card-w:clamp(210px,62vw,270px);--card-h:calc(var(--card-w)*1.43)}
+ .fan-stage{height:auto;margin-top:24px;touch-action:auto;user-select:auto}
+ .fan{display:flex;gap:16px;max-width:none;height:auto;padding:24px calc((100% - var(--card-w))/2) 30px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scroll-padding-inline:calc((100% - var(--card-w))/2);scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:auto}
+ .fan::-webkit-scrollbar{display:none}
+ .fan-stage .specimen{position:relative;top:auto;left:auto;flex:0 0 var(--card-w);transform:none!important;scroll-snap-align:center;touch-action:auto;will-change:auto}
+ .fan-stage .specimen.is-active{box-shadow:0 8px 10px oklch(.12 .02 230 / .2),0 2px 2px oklch(.1 0 0 / .12)}
+}
