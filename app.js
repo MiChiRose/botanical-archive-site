@@ -3,6 +3,7 @@
  */
 (() => {
   'use strict';
+  const t=window.BotanicalI18n.t;
   const Input=window.BotanicalInput;
   const data = [
     {name:'Хвощ',latin:'Equisetum hiemale',file:'horsetail',plate:'01',id:'225669-equisetum-hiemale',text:'Прямые рёбра, повторяющийся шаг, округлая вершина. Стебель выглядит как архитектурная деталь — и остаётся живой формой.'},
@@ -36,8 +37,8 @@
   function announce(index){
     if(lastAnnounced===index)return;
     lastAnnounced=index;
-    name.textContent=index===null?'Смотрите внимательнее':data[index].name;
-    latin.textContent=index===null?'В каждой форме — целый мир':data[index].latin;
+    name.textContent=index===null?t('Смотрите внимательнее'):t(data[index].name);
+    latin.textContent=index===null?t('В каждой форме — целый мир'):data[index].latin;
     if(index!==null){mobileIndex=index;document.querySelector('.picker-position').textContent=`${index+1} / 7`;}
   }
   function targets(index){
@@ -89,10 +90,10 @@
     clearTimeout(leaveTimer);
     if(compact()){
       entrance?.kill();entrance=null;ready=true;stage.dataset.state='ready';
-      replay.querySelector('span').textContent='В начало ленты';
+      replay.querySelector('span').textContent=t('В начало ленты');
       arrange(0,{instant:!repeat});return;
     }
-    replay.querySelector('span').textContent='Разложить ещё раз';
+    replay.querySelector('span').textContent=t('Разложить ещё раз');
     if(entrance)entrance.kill();
     if(g)g.killTweensOf(cards);
     ready=false;selected=null;mobileIndex=3;document.querySelector('.picker-position').textContent='4 / 7';announce(null);stage.dataset.state='entering';
@@ -158,7 +159,7 @@
     document.documentElement.dataset.reduced=String(reduced());
     motionButton.setAttribute('aria-pressed',String(reduced()));
     motionButton.disabled=reduceMedia.matches;
-    motionButton.title=reduceMedia.matches?'Включено в настройках вашей системы':'Показывать состояния без движения';
+    motionButton.title=reduceMedia.matches?t('Включено в настройках вашей системы'):t('Показывать состояния без движения');
     if(entrance){entrance.kill();entrance=null;}
     ready=true;stage.dataset.state='ready';arrange(selected,{instant:true});
     for(const dialog of [viewer,about])if(dialog.dataset.closing==='true')closeDialog(dialog,true);
@@ -169,10 +170,10 @@
   function updateViewer(i,animate=false,direction=1){
     activeViewer=(i+7)%7;const item=data[activeViewer];
     const image=viewer.querySelector('img');image.src=`assets/${item.file}.jpg`;image.alt=cards[activeViewer].querySelector('img').alt;
-    viewer.querySelector('h2').textContent=item.name;
+    viewer.querySelector('h2').textContent=t(item.name);
     viewer.querySelector('.viewer-latin').textContent=item.latin;
-    viewer.querySelector('.viewer-description').textContent=item.text;
-    viewer.querySelector('.viewer-number').textContent=`Лист ${String(activeViewer+1).padStart(2,'0')} / 07 · Таблица ${item.plate}`;
+    viewer.querySelector('.viewer-description').textContent=t(item.text);
+    viewer.querySelector('.viewer-number').textContent=t('Лист {number} / 07 · Таблица {plate}',{number:String(activeViewer+1).padStart(2,'0'),plate:item.plate});
     viewer.querySelector('.viewer-position').textContent=`${activeViewer+1} / 7`;
     viewer.querySelector('.source-link').href=item.id?`https://www.nga.gov/artworks/${item.id}`:'https://www.nga.gov/artists/30239-karl-blossfeldt/artworks';
     select(activeViewer,true);
@@ -225,10 +226,16 @@
   document.querySelector('.picker-prev').addEventListener('click',event=>select(mobileIndex-1,Input.keyboard(event)));
   document.querySelector('.picker-next').addEventListener('click',event=>select(mobileIndex+1,Input.keyboard(event)));
   document.querySelector('.picker-open').addEventListener('click',event=>openViewer(mobileIndex,event.currentTarget,Input.keyboard(event)));
+  addEventListener('botanical:languagechange',()=>{
+    lastAnnounced=undefined;announce(selected);
+    replay.querySelector('span').textContent=t(compact()?'В начало ленты':'Разложить ещё раз');
+    motionButton.title=t(reduceMedia.matches?'Включено в настройках вашей системы':'Показывать состояния без движения');
+    if(viewer.open)updateViewer(activeViewer);
+  });
   let lastWidth=innerWidth;
   addEventListener('resize',()=>{
     if(innerWidth===lastWidth)return;lastWidth=innerWidth;railTarget=null;
-    cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{replay.querySelector('span').textContent=compact()?'В начало ленты':'Разложить ещё раз';finishEntrance();arrange(compact()?mobileIndex:selected,{instant:true});});
+    cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{replay.querySelector('span').textContent=compact()?t('В начало ленты'):t('Разложить ещё раз');finishEntrance();arrange(compact()?mobileIndex:selected,{instant:true});});
   });
   document.documentElement.dataset.reduced=String(reduced());
   motionButton.setAttribute('aria-pressed',String(reduced()));motionButton.disabled=reduceMedia.matches;

@@ -78,7 +78,7 @@
     if(staticScene())return;
     scene.dataset.keyboard=String(Input.keyboard(event));
     const p=[.05,.5,.95][i];
-    scrollTo({top:start+distance*p,behavior:Input.keyboard(event)||reduced()?'auto':'smooth'});
+    window.BotanicalScroll.to(start+distance*p,{instant:Input.keyboard(event)||reduced()});
   }));
   if('IntersectionObserver' in window){
     if(gs&&!reduced()){
@@ -100,6 +100,7 @@
   });
   addEventListener('wheel',()=>{if(scene.dataset.keyboard==='true')scene.dataset.keyboard='false';},{passive:true});
   const sizeObserver=new ResizeObserver(measure);sizeObserver.observe(scene);sizeObserver.observe(sticky);
+  addEventListener('botanical:layout',measure);
   document.fonts.ready.then(measure);
   configure();
   addEventListener('pagehide',()=>{

@@ -5,6 +5,7 @@
  */
 (() => {
   'use strict';
+  const t=window.BotanicalI18n.t;
   const Input=window.BotanicalInput;
   const host=document.querySelector('.living-hero'), stage=host.querySelector('.living-stage');
   const canvas=host.querySelector('canvas'), status=host.querySelector('.living-status');
@@ -24,6 +25,7 @@
   const T=window.THREE, g=window.gsap, systemReduced=matchMedia('(prefers-reduced-motion: reduce)');
   const reduced=()=>systemReduced.matches||document.documentElement.dataset.reduced==='true';
   const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+  let warming=true;
   let renderer, disposed=false, raf=0, inView=true, paused=false, locked=false, hovering=false, bronze=false;
   let width=1,height=1,scrollProgress=0,lastTime=0,clock=0,frames=0,statTime=0,lastInput=performance.now(),firstInput=false;
   let mobileCenterY=.43,mobileSize=1;
@@ -35,22 +37,23 @@
   const state={reveal:0,finish:0,bloom:1}, pointer={x:0,y:0,easeX:0,easeY:0};
   let bloomTimeline=null;
   function fallback(message){
-    host.dataset.renderer='fallback';host.dataset.ready='false';status.textContent=message;
+    host.dataset.renderer='fallback';host.dataset.ready='false';status.dataset.localizedMessage=window.BotanicalI18n.source(message);status.textContent=message;
     journey.classList.remove('is-enhanced');
     intro.style.opacity='1';intro.style.transform='none';after.style.opacity='0';
     heroInterface.forEach(element=>{element.style.opacity='1';element.inert=false;});
     host.querySelector('.living-fallback').removeAttribute('aria-hidden');canvas.setAttribute('aria-hidden','true');
     requestAnimationFrame(()=>window.ScrollTrigger?.refresh());
+    window.BotanicalBoot?.sceneReady('photographic');
     canvas.style.display='none';revealButton.disabled=true;finishButton.disabled=true;pauseButton.disabled=true;bloomRange.disabled=true;bloomPlay.disabled=true;
   }
-  if(!T){fallback('Фотографический режим: 3D-библиотека недоступна.');return;}
+  if(!T){fallback(t('Фотографический режим: 3D-библиотека недоступна.'));return;}
   try{
     renderer=new T.WebGLRenderer({canvas,alpha:true,premultipliedAlpha:false,antialias:false,powerPreference:'high-performance'});
     if(!renderer.extensions.has('EXT_color_buffer_float'))throw new Error('Float color targets unavailable');
     renderer.setClearColor(0x000000,0);renderer.autoClear=true;
     renderer.outputColorSpace=T.LinearSRGBColorSpace;
     renderer.toneMapping=T.NoToneMapping;
-  }catch(error){fallback('Фотографический режим: этому браузеру недоступна 3D-сцена.');renderer?.dispose();return;}
+  }catch(error){fallback(t('Фотографический режим: этому браузеру недоступна 3D-сцена.'));renderer?.dispose();return;}
   // One viewport canvas, shared by hero compositing and the DOM-anchored flight.
   // Text remains HTML above it; transparent pixels expose the next chapter.
   canvas.classList.add('is-world');canvas.setAttribute('aria-hidden','true');document.body.append(canvas);
@@ -249,7 +252,7 @@
     mobileSize=Math.min(width*1.18,Math.max(160,safeBottom-safeTop)/.92);
     host.dataset.modelSize=mobileSize.toFixed(1);
     const description=host.querySelector('.living-description');
-    description.firstChild.textContent=automatic()?'Цветок проявляется сам.':'Проведите по цветку.';
+    description.firstChild.textContent=automatic()?t('Цветок проявляется сам.'):t('Проведите по цветку.');
     host.dataset.inputMode=automatic()?'automatic':'pointer';host.dataset.brushRadius=String(automatic()?50:70);
     const mobile=width<=768, dpr=Math.min(devicePixelRatio||1,mobileGpu?1:1.5);
     renderer.setPixelRatio(dpr);renderer.setSize(width,height,false);uniforms.uResolution.value.set(width,height);
@@ -295,12 +298,12 @@
     const value=locked||hovering?1:0;
     if(g&&!reduced()&&!paused)g.to(state,{reveal:value,duration:value?1.5:1,ease:'expo.inOut',overwrite:'auto',onUpdate:drawOnce});
     else{state.reveal=value;drawOnce();}
-    revealButton.setAttribute('aria-pressed',String(locked));host.querySelector('.living-reveal-label').textContent=locked?'Вернуть фотографию':'Проявить цветок';
+    revealButton.setAttribute('aria-pressed',String(locked));host.querySelector('.living-reveal-label').textContent=locked?t('Вернуть фотографию'):t('Проявить цветок');
   }
   function syncBloom(){
     const value=Math.round(clamp(state.bloom)*100);
     bloomRange.value=String(value);bloomValue.textContent=`${value}%`;
-    bloomRange.setAttribute('aria-valuetext',value===0?'Закрытый бутон':value===100?'Цветок раскрыт полностью':`Раскрытие цветка ${value}%`);
+    bloomRange.setAttribute('aria-valuetext',value===0?t('Закрытый бутон'):value===100?t('Цветок раскрыт полностью'):t('Раскрытие цветка {value}%',{value}));
     bloomRange.style.setProperty('--bloom-fill',`${value}%`);host.dataset.bloom=state.bloom.toFixed(3);
     drawOnce();
   }
@@ -346,7 +349,7 @@
     else{state.finish=bronze?1:0;drawOnce();}
   });
   pauseButton.addEventListener('click',()=>{
-    paused=!paused;pauseButton.setAttribute('aria-pressed',String(paused));pauseButton.setAttribute('aria-label',paused?'Продолжить движение цветка':'Остановить движение цветка');pauseButton.textContent=paused?'▷':'Ⅱ';
+    paused=!paused;pauseButton.setAttribute('aria-pressed',String(paused));pauseButton.setAttribute('aria-label',paused?t('Продолжить движение цветка'):t('Остановить движение цветка'));pauseButton.textContent=paused?'▷':'Ⅱ';
     if(paused){cancelAnimationFrame(raf);raf=0;stopBloom();g?.killTweensOf(state);state.reveal=locked?1:0;state.finish=bronze?1:0;syncBloom();drawOnce();}else{lastTime=0;start();}
   });
   function updateScene(dt,animate){
@@ -436,7 +439,7 @@
     const dt=lastTime?Math.min((time-lastTime)/1000,1/20):.014;lastTime=time;clock+=dt;
     render(true,dt);raf=requestAnimationFrame(tick);
   }
-  function start(){if(!raf&&!disposed&&!paused&&!reduced()&&inView&&!document.hidden){if(!travel.active)bloomTimeline?.resume();lastTime=0;raf=requestAnimationFrame(tick);}}
+  function start(){if(!warming&&!raf&&!disposed&&!paused&&!reduced()&&inView&&!document.hidden){if(!travel.active)bloomTimeline?.resume();lastTime=0;raf=requestAnimationFrame(tick);}}
   function preference(){
     journey.classList.toggle('is-enhanced',!!Path&&!reduced());
     if(reduced()){cancelAnimationFrame(raf);raf=0;stopBloom();g?.killTweensOf(state);state.finish=bronze?1:0;revealButton.disabled=true;pauseButton.disabled=true;}
@@ -457,21 +460,40 @@
     clearTimeout(resizeTimer);resizeTimer=setTimeout(resize,120);
   };
   addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',onResize);
+  const onLanguage=()=>{
+    if(status.dataset.localizedMessage)status.textContent=t(status.dataset.localizedMessage);
+    if(disposed)return;
+    host.querySelector('.living-reveal-label').textContent=t(locked?'Вернуть фотографию':'Проявить цветок');
+    pauseButton.setAttribute('aria-label',t(paused?'Продолжить движение цветка':'Остановить движение цветка'));
+    syncBloom();resize();
+  };
+  addEventListener('botanical:languagechange',onLanguage);addEventListener('botanical:layout',resize);
   const onVisibility=()=>{if(document.hidden){pendingInput=null;cancelAnimationFrame(raf);raf=0;bloomTimeline?.pause();}else start();};document.addEventListener('visibilitychange',onVisibility);
   function dispose(){
     if(disposed)return;inputEvents.abort();cancelAnimationFrame(scrollFrame);disposed=true;cancelAnimationFrame(raf);clearTimeout(resizeTimer);stopBloom();g?.killTweensOf(state);
     visibility.disconnect();preferences.disconnect();systemReduced.removeEventListener('change',preference);
-    removeEventListener('scroll',onScroll);removeEventListener('resize',onResize);document.removeEventListener('visibilitychange',onVisibility);
+    removeEventListener('botanical:languagechange',onLanguage);removeEventListener('botanical:layout',resize);removeEventListener('scroll',onScroll);removeEventListener('resize',onResize);document.removeEventListener('visibilitychange',onVisibility);
     targets.forEach(t=>t.dispose());materials.forEach(m=>m.dispose());geometries.forEach(geo=>geo.dispose());photoTexture.dispose();environmentTarget.dispose();pmrem.dispose();renderer.dispose();
   }
-  canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();cancelAnimationFrame(raf);raf=0;fallback('3D-контекст остановлен. Фотографическая версия остаётся доступной.');dispose();});
-  canvas.addEventListener('webglcontextrestored',()=>{status.textContent='Обновите страницу, чтобы снова открыть 3D-форму.';});
+  canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();cancelAnimationFrame(raf);raf=0;fallback(t('3D-контекст остановлен. Фотографическая версия остаётся доступной.'));dispose();});
+  canvas.addEventListener('webglcontextrestored',()=>{status.textContent=t('Обновите страницу, чтобы снова открыть 3D-форму.');});
   addEventListener('pagehide',event=>{if(event.persisted){cancelAnimationFrame(raf);raf=0;bloomTimeline?.pause();}else dispose();});
   addEventListener('pageshow',event=>{if(event.persisted){resize();start();}});
-  try{
-    resize();host.dataset.renderer='webgl2';host.dataset.fluid='gpu-pressure';host.dataset.ready='true';host.querySelector('.living-fallback').setAttribute('aria-hidden','true');status.textContent='';
-    new T.TextureLoader().load('assets/cobaea.jpg',loaded=>{if(disposed){loaded.dispose();return;}photoTexture.dispose();photoTexture=loaded;loaded.colorSpace=T.NoColorSpace;uniforms.uPhoto.value=loaded;uniforms.uPhotoReady.value=1;drawOnce();},undefined,()=>{state.reveal=1;locked=true;setReveal();});
-    document.fonts?.ready.then(()=>{if(!disposed)resize();});
-    preference();start();
-  }catch(error){fallback('Фотографический режим: 3D-сцену не удалось запустить.');dispose();}
+  async function prepare(){
+    try{
+      resize();host.dataset.renderer='webgl2';host.dataset.fluid='gpu-pressure';
+      const loaded=await new Promise((resolve,reject)=>new T.TextureLoader().load('assets/cobaea.jpg',resolve,undefined,reject));
+      if(disposed){loaded.dispose();return;}
+      photoTexture.dispose();photoTexture=loaded;loaded.colorSpace=T.NoColorSpace;uniforms.uPhoto.value=loaded;uniforms.uPhotoReady.value=1;
+      await document.fonts.ready;if(disposed)return;
+      // Upload geometry/textures and warm every shader path before the visitor
+      // can scroll: model, compositor, fluid advection, curl and pressure passes.
+      await renderer.compileAsync(world,camera);if(disposed)return;
+      preference();simulation.inject(.5,.5,0,0,0);simulation.step(1/60);simulation.all.forEach(clear);
+      render(false);renderer.getContext().finish();
+      warming=false;host.dataset.ready='true';host.querySelector('.living-fallback').setAttribute('aria-hidden','true');status.textContent='';canvas.classList.add('is-ready');
+      performance.mark('botanical-scene-warmed');window.BotanicalBoot?.sceneReady('webgl');start();
+    }catch(error){if(!disposed){fallback(t('Фотографический режим: 3D-сцену не удалось запустить.'));dispose();}}
+  }
+  prepare();
 })();

@@ -2,6 +2,7 @@
    See RESEARCH-MAPPING.md for original parameters and deliberate adaptations. */
 (() => {
   'use strict';
+  const t=window.BotanicalI18n.t;
   const g=window.gsap, ST=window.ScrollTrigger;
   if(!g||!ST)return; // Readable vertical HTML is the no-animation fallback.
   g.registerPlugin(ST);
@@ -19,22 +20,26 @@
   // LN-07: two vertically stacked glyphs share one overflow window.
   // Keep one accessible text node; duplicated glyphs never enter the AX tree.
   document.querySelectorAll('[data-roll]').forEach(label=>{
-    const text=label.textContent, sr=document.createElement('span'), visual=document.createElement('span');
-    sr.className='roll-accessible';sr.textContent=text;visual.className='roll-visual';visual.setAttribute('aria-hidden','true');
-    for(const char of Array.from(text)){
-      const slot=document.createElement('span'), pair=document.createElement('span');
-      slot.className='roll-slot';pair.className='roll-pair';
-      for(let i=0;i<2;i++){const glyph=document.createElement('span');glyph.textContent=char===' '?'\u00a0':char;pair.append(glyph);}
-      slot.append(pair);visual.append(slot);
-    }
-    label.replaceChildren(sr,visual);label.classList.add('roll-label');
-    const host=label.closest('button,a'), pairs=[...label.querySelectorAll('.roll-pair')];
+    const host=label.closest('button,a'),record={label,pairs:[]};
     if(!host)return;
-    const reset=()=>g.to(pairs,{yPercent:0,duration:reduced()?0:.6,ease:'power3.out',stagger:.02,overwrite:true});
-    host.addEventListener('pointerenter',event=>{if(!reduced()&&desktop.matches&&fine.matches&&event.pointerType==='mouse')g.to(pairs,{yPercent:-50,duration:.6,ease:'power3.out',stagger:.02,overwrite:true});});
-    host.addEventListener('pointerleave',reset);
-    host.addEventListener('focus',()=>{if(host.matches(':focus-visible')){g.killTweensOf(pairs);g.set(pairs,{yPercent:0});}});
-    rolls.push({pairs,reset});
+    record.build=()=>{
+      const text=label.querySelector('.roll-accessible')?.textContent||label.textContent;
+      g.killTweensOf(record.pairs);
+      const sr=document.createElement('span'),visual=document.createElement('span');
+      sr.className='roll-accessible';sr.textContent=text;visual.className='roll-visual';visual.setAttribute('aria-hidden','true');
+      for(const char of Array.from(text)){
+        const slot=document.createElement('span'),pair=document.createElement('span');slot.className='roll-slot';pair.className='roll-pair';
+        for(let i=0;i<2;i++){const glyph=document.createElement('span');glyph.textContent=char===' '?'\u00a0':char;pair.append(glyph);}
+        slot.append(pair);visual.append(slot);
+      }
+      label.replaceChildren(sr,visual);label.classList.add('roll-label');record.pairs=[...label.querySelectorAll('.roll-pair')];
+    };
+    record.build();
+    record.reset=()=>g.to(record.pairs,{yPercent:0,duration:reduced()?0:.6,ease:'power3.out',stagger:.02,overwrite:true});
+    host.addEventListener('pointerenter',event=>{if(!reduced()&&desktop.matches&&fine.matches&&event.pointerType==='mouse')g.to(record.pairs,{yPercent:-50,duration:.6,ease:'power3.out',stagger:.02,overwrite:true});});
+    host.addEventListener('pointerleave',record.reset);
+    host.addEventListener('focus',()=>{if(host.matches(':focus-visible')){g.killTweensOf(record.pairs);g.set(record.pairs,{yPercent:0});}});
+    rolls.push(record);
   });
 
   // LN-06: reveal the line first, then retract its solid cover 300 ms later.
@@ -107,9 +112,9 @@
   }
   pause.addEventListener('click',()=>{
     manualPause=!manualPause;pause.setAttribute('aria-pressed',String(manualPause));
-    pause.setAttribute('aria-label',manualPause?'Продолжить бегущую строку':'Остановить бегущую строку');updateLoop();
+    pause.setAttribute('aria-label',manualPause?t('Продолжить бегущую строку'):t('Остановить бегущую строку'));updateLoop();
     // Replace label as an ordinary string; no stale glyph copies after a state change.
-    const label=pause.querySelector('.ribbon-toggle-label');label.textContent=manualPause?'Продолжить строку':'Остановить строку';
+    const label=pause.querySelector('.ribbon-toggle-label');label.textContent=manualPause?t('Продолжить строку'):t('Остановить строку');
   });
   const ribbonObserver=new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;if(inView&&!loop&&!reduced())buildLoop();updateLoop();},{rootMargin:'200px 0px',threshold:0});
   ribbonObserver.observe(ribbon);
@@ -164,6 +169,10 @@
     resizeWidth=innerWidth;resizeHeight=height;
     clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{ST.refresh();if(loop)buildLoop();},200);
   });
+  addEventListener('botanical:languagechange',()=>{
+    pause.setAttribute('aria-label',t(manualPause?'Продолжить бегущую строку':'Остановить бегущую строку'));
+    pause.querySelector('.ribbon-toggle-label').textContent=t(manualPause?'Продолжить строку':'Остановить строку');
+    rolls.forEach(record=>record.build());ST.refresh();if(loop)buildLoop();});
   document.fonts.ready.then(()=>{ST.refresh();if(loop)buildLoop();});
   setup();
   addEventListener('pagehide',()=>{loop?.pause();clearTimeout(refreshTimer);});

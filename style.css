@@ -152,3 +152,19 @@ dialog{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 html[data-reduced=true] .atlas-image-veil,html[data-reduced=true] .atlas-hover{display:none!important}
 
 @media(max-width:991px){.atlas-pointer-hint{display:none!important}.atlas-hover{display:none!important}}
+
+/* v8 — localised controls and startup preparation; no layout shift at reveal. */
+.boot-screen{display:none}
+html[data-boot=loading]{overflow:hidden}
+html[data-boot=loading] .boot-screen,html[data-boot=ready] .boot-screen:not([hidden]){display:flex;position:fixed;inset:0;z-index:1000;background:#101e23;color:#e6eadb;align-items:center;justify-content:center;flex-direction:column;padding:28px;text-align:center;opacity:1;transition:opacity .24s ease-out}
+html[data-boot=ready] .boot-screen:not([hidden]){opacity:0;pointer-events:none}
+.boot-mark{font-size:58px;color:#c8d1ab;line-height:1;margin-bottom:26px}.boot-title{font:400 clamp(26px,4vw,42px)/1.2 Literata,Georgia,serif;letter-spacing:-.035em;margin-bottom:16px}.boot-caption{font-size:12px;line-height:1.6;color:#acc1b9}.boot-line{width:110px;height:1px;background:#c8d1ab66;margin-top:22px}
+.living-canvas.is-world{opacity:0;transition:opacity .3s ease-out}.living-canvas.is-world.is-ready{opacity:1}
+.language-switch{display:flex;align-items:center;gap:3px;margin-left:auto;font-size:11px;flex-shrink:0;color:#b8cbc7}.language-switch button{background:none;border:0;padding:10px 8px;min-width:40px;min-height:44px;color:inherit;font-size:11px}.language-switch button[aria-pressed=true]{color:#f1f2e4;text-decoration:underline;text-underline-offset:5px}.language-switch+ .about-button{margin-left:0}.language-switch>span{opacity:.4}
+html[lang=en] .specimen-caption{font-size:13px}html[lang=en] .living-intro h1{font-size:clamp(78px,10vw,154px)}
+@media(max-width:700px){.language-switch{gap:0;font-size:10px}.language-switch button{min-width:34px;padding:10px 5px;font-size:10px}.masthead{gap:8px}.about-button>[data-roll]{font-size:10px}.about-button>span:last-child{font-size:16px}html[lang=en] .living-intro h1{font-size:clamp(60px,16vw,96px)}html[lang=en] .specimen-caption{font-size:12px}}
+@media(max-width:390px){.masthead{margin-inline:18px;gap:5px}.brand{font-size:29px}.about-button>[data-roll]{font-size:9px}.about-button>span:last-child{margin-left:2px}.language-switch button{min-width:31px}}
+@media(max-width:700px) and (max-height:720px){html[lang=en] .living-intro h1{font-size:clamp(44px,13.8vw,60px)}}
+@media(max-width:700px) and (max-height:630px){html[lang=en] .living-intro h1{font-size:clamp(35px,10.6vw,53px)}}
+
+html{scrollbar-gutter:stable}

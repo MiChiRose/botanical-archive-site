@@ -3,27 +3,35 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="application-version" content="0.7.0">
+  <meta name="application-version" content="0.8.0">
   <meta name="theme-color" content="#244653">
   <meta name="description" content="Семь фотографических наблюдений за формой растений. Интерактивный ботанический кабинет.">
   <title>Лист. — У природы свой почерк</title>
-  <link rel="stylesheet" href="style.css?v=7.0">
+  <script src="boot.js?v=8.0"></script>
+  <link rel="preload" href="assets/golos-regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="assets/literata-regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="assets/cobaea.jpg" as="image" fetchpriority="high">
+  <link rel="stylesheet" href="style.css?v=8.0">
   <script defer src="vendor/gsap.min.js"></script>
   <script defer src="vendor/ScrollTrigger.min.js"></script>
-  <script defer src="input-runtime.js?v=7.0"></script>
-  <script defer src="app.js?v=7.0"></script>
-  <script defer src="motion.js?v=7.0"></script>
-  <script defer src="research-motion.js?v=7.0"></script>
+  <script defer src="input-runtime.js?v=8.0"></script>
+  <script defer src="i18n.js?v=8.0"></script>
+  <script defer src="navigation.js?v=8.0"></script>
+  <script defer src="app.js?v=8.0"></script>
+  <script defer src="motion.js?v=8.0"></script>
+  <script defer src="research-motion.js?v=8.0"></script>
   <script defer src="vendor/three-r180.js"></script>
-  <script defer src="journey-path.js?v=7.0"></script>
-  <script defer src="living-hero.js?v=7.0"></script>
-  <script defer src="atlas-motion.js?v=7.0"></script>
+  <script defer src="journey-path.js?v=8.0"></script>
+  <script defer src="living-hero.js?v=8.0"></script>
+  <script defer src="atlas-motion.js?v=8.0"></script>
 </head>
 <body>
+  <div class="boot-screen" role="status" aria-label="Загрузка кабинета природных форм"><span class="boot-mark" aria-hidden="true">✳</span><p class="boot-title">Собираем свет и форму</p><p class="boot-caption">Готовим сцену, фотографии и шрифты.</p><span class="boot-line" aria-hidden="true"></span></div>
   <a class="skip" href="#collection">Перейти к коллекции</a>
   <header class="masthead">
     <a href="#" class="brand" aria-label="Лист. На главную">лист<span>.</span></a>
     <span class="masthead-note">Кабинет природных форм</span>
+    <div class="language-switch" role="group" aria-label="Язык сайта"><button type="button" data-language="ru" lang="ru" aria-label="Русский" aria-pressed="true">RU</button><span aria-hidden="true">/</span><button type="button" data-language="en" lang="en" aria-label="English" aria-pressed="false">EN</button></div>
     <button class="text-button about-button" data-about><span data-roll>Об этой коллекции</span> <span aria-hidden="true">↗</span></button>
   </header>
   <div class="viewport-probe" aria-hidden="true"></div>
