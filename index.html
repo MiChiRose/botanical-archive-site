@@ -3,20 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="application-version" content="0.6.3">
+  <meta name="application-version" content="0.7.0">
   <meta name="theme-color" content="#244653">
   <meta name="description" content="Семь фотографических наблюдений за формой растений. Интерактивный ботанический кабинет.">
   <title>Лист. — У природы свой почерк</title>
-  <link rel="stylesheet" href="style.css?v=6.7">
+  <link rel="stylesheet" href="style.css?v=7.0">
   <script defer src="vendor/gsap.min.js"></script>
   <script defer src="vendor/ScrollTrigger.min.js"></script>
-  <script defer src="input-runtime.js?v=6.7"></script>
-  <script defer src="app.js?v=6.7"></script>
-  <script defer src="motion.js?v=6.7"></script>
-  <script defer src="research-motion.js?v=6.7"></script>
+  <script defer src="input-runtime.js?v=7.0"></script>
+  <script defer src="app.js?v=7.0"></script>
+  <script defer src="motion.js?v=7.0"></script>
+  <script defer src="research-motion.js?v=7.0"></script>
   <script defer src="vendor/three-r180.js"></script>
-  <script defer src="journey-path.js?v=6.7"></script>
-  <script defer src="living-hero.js?v=6.7"></script>
+  <script defer src="journey-path.js?v=7.0"></script>
+  <script defer src="living-hero.js?v=7.0"></script>
+  <script defer src="atlas-motion.js?v=7.0"></script>
 </head>
 <body>
   <a class="skip" href="#collection">Перейти к коллекции</a>
@@ -138,8 +139,54 @@
           <button class="note" data-open-specimen="4" aria-label="Рассмотреть складку костенца"><span class="note-photo"><span class="note-drift"><img src="assets/leaves.jpg" width="800" height="1000" loading="lazy" alt="Листья костенца со свёрнутыми краями"></span><span class="note-open" aria-hidden="true">↗</span></span><span class="note-copy"><span class="note-meta">02 / Поверхность</span><span class="note-title" data-wipe>Складка</span><span class="note-latin">Scolopendrium vulgare</span><span class="note-description">Свет становится объёмом.</span><span class="note-detail">Два листа, два поворота к свету. Мягкая поверхность собирается в складки и раскрывает форму без единого резкого угла.</span><span class="note-action" aria-hidden="true" data-roll>Рассмотреть лист ↗</span></span></button>
           <button class="note" data-open-specimen="6" aria-label="Рассмотреть контур мака"><span class="note-photo"><span class="note-drift"><img src="assets/poppy.jpg" width="800" height="1000" loading="lazy" alt="Плотный бутон мака с тонкими волосками"></span><span class="note-open" aria-hidden="true">↗</span></span><span class="note-copy"><span class="note-meta">03 / Силуэт</span><span class="note-title" data-wipe>Контур</span><span class="note-latin">Papaver orientale</span><span class="note-description">Ни одной случайной линии.</span><span class="note-detail">Замкнутый бутон хранит будущий цветок. Даже у плотной оболочки есть свой рисунок: тонкие волоски и острые края.</span><span class="note-action" aria-hidden="true" data-roll>Рассмотреть лист ↗</span></span></button>
         </div></div>
-        <div class="notes-controls"><span class="notes-direction">Листайте вниз — смотрите дальше <span aria-hidden="true">→</span></span><div class="notes-dots" aria-label="Перейти к наблюдению"><button data-note="0" aria-label="Первое наблюдение: Ритм" aria-pressed="true">01</button><button data-note="1" aria-label="Второе наблюдение: Складка" aria-pressed="false">02</button><button data-note="2" aria-label="Третье наблюдение: Контур" aria-pressed="false">03</button></div><a href="#botanical-ribbon" class="notes-skip" data-roll>Дальше к архиву ↓</a></div>
+        <div class="notes-controls"><span class="notes-direction">Листайте вниз — смотрите дальше <span aria-hidden="true">→</span></span><div class="notes-dots" aria-label="Перейти к наблюдению"><button data-note="0" aria-label="Первое наблюдение: Ритм" aria-pressed="true">01</button><button data-note="1" aria-label="Второе наблюдение: Складка" aria-pressed="false">02</button><button data-note="2" aria-label="Третье наблюдение: Контур" aria-pressed="false">03</button></div><a href="#dialogue-lab" class="notes-skip" data-roll>К диалогу линий ↓</a></div>
       </div>
+    </section>
+    <section class="dialogue-lab" id="dialogue-lab" aria-labelledby="dialogue-title">
+      <div class="dialogue-heading">
+        <span class="dialogue-intro">Два способа быть живым</span>
+        <h2 id="dialogue-title" data-atlas-oval><span class="atlas-oval-line"><span>Строгий ритм.</span></span><span class="atlas-oval-line"><span>Свободный жест.</span></span></h2>
+        <p>Одна природа — два характера.<br>Посмотрите, как они находят общий язык.</p>
+      </div>
+      <div class="dialogue-pair">
+        <div class="dialogue-half">
+          <button class="dialogue-plate" data-open-specimen="0" aria-label="Рассмотреть строгий ритм хвоща"><span class="dialogue-drift"><span class="atlas-image-reveal"><img src="assets/horsetail.jpg" width="800" height="1000" loading="lazy" alt="Строгие ярусы стебля хвоща"><span class="atlas-image-veil" aria-hidden="true"></span></span></span></button>
+          <div class="dialogue-label"><span>Equisetum hiemale</span><h3>Повторение.</h3><p>Линия возвращается.<br> Но каждый раз — немного другой.</p></div>
+        </div>
+        <div class="dialogue-half">
+          <button class="dialogue-plate" data-open-specimen="3" aria-label="Рассмотреть свободный жест папоротника"><span class="dialogue-drift"><span class="atlas-image-reveal"><img src="assets/fern.jpg" width="800" height="1000" loading="lazy" alt="Свободные спирали молодых побегов папоротника"><span class="atlas-image-veil" aria-hidden="true"></span></span></span></button>
+          <div class="dialogue-label"><span>Adiantum pedatum</span><h3>Отклонение.</h3><p>Стебель меняет направление.<br> И находит собственный ритм.</p></div>
+        </div>
+      </div>
+      <div class="atlas-visor-scene">
+        <figure class="atlas-visor"><img src="assets/acanthus.jpg" width="800" height="1000" loading="lazy" alt="Повторяющиеся прицветники аканта в овальном окне"></figure>
+        <p class="atlas-visor-caption">Между порядком и случайностью<br><span>и появляется характер.</span></p>
+      </div>
+      <div class="atlas-numbers" aria-label="Состав ботанического архива">
+        <div class="atlas-stat"><span class="atlas-number-window" aria-hidden="true"><span class="atlas-number-drift"><span data-atlas-count="7">07</span></span></span><span class="atlas-stat-label">Семь фотографических листов</span></div>
+        <div class="atlas-stat"><span class="atlas-number-window" aria-hidden="true"><span class="atlas-number-drift"><span data-atlas-count="10">10</span></span></span><span class="atlas-stat-label">Десять лепестков скульптуры</span></div>
+        <div class="atlas-stat"><span class="atlas-number-window" aria-hidden="true"><span class="atlas-number-drift"><span data-atlas-count="2">02</span></span></span><span class="atlas-stat-label">Две поверхности: серебро и бронза</span></div>
+      </div>
+      <a class="dialogue-next" href="#field-index">Открыть указатель <span aria-hidden="true">↓</span></a>
+    </section>
+    <section class="field-index" id="field-index" aria-labelledby="field-index-title">
+      <div class="atlas-index-heading"><h2 id="field-index-title" data-atlas-oval><span class="atlas-oval-line"><span>Указатель форм.</span></span></h2><p><span class="atlas-pointer-hint">Проведите указателем по названиям.</span><span>Выберите растение, чтобы рассмотреть лист.</span></p></div>
+      <div class="atlas-index-list" aria-label="Все семь растений">
+        <button class="atlas-index-row" data-open-specimen="0" data-atlas-photo="horsetail"><span class="atlas-index-number">01</span><span class="atlas-index-name">Хвощ<small>Equisetum hiemale</small></span><span class="atlas-index-note">Ритм ярусов</span><span class="atlas-index-arrow" aria-hidden="true">↗</span></button>
+        <button class="atlas-index-row" data-open-specimen="1" data-atlas-photo="cobaea"><span class="atlas-index-number">02</span><span class="atlas-index-name">Кобея<small>Cobaea scandens</small></span><span class="atlas-index-note">Складка лепестка</span><span class="atlas-index-arrow" aria-hidden="true">↗</span></button>
+        <button class="atlas-index-row" data-open-specimen="2" data-atlas-photo="acanthus"><span class="atlas-index-number">03</span><span class="atlas-index-name">Акант<small>Acanthus mollis</small></span><span class="atlas-index-note">Вертикальная линия</span><span class="atlas-index-arrow" aria-hidden="true">↗</span></button>
+        <button class="atlas-index-row" data-open-specimen="3" data-atlas-photo="fern"><span class="atlas-index-number">04</span><span class="atlas-index-name">Адиантум<small>Adiantum pedatum</small></span><span class="atlas-index-note">Свободный завиток</span><span class="atlas-index-arrow" aria-hidden="true">↗</span></button>
+        <button class="atlas-index-row" data-open-specimen="4" data-atlas-photo="leaves"><span class="atlas-index-number">05</span><span class="atlas-index-name">Костенец<small>Scolopendrium vulgare</small></span><span class="atlas-index-note">Свет на поверхности</span><span class="atlas-index-arrow" aria-hidden="true">↗</span></button>
+        <button class="atlas-index-row" data-open-specimen="5" data-atlas-photo="geum"><span class="atlas-index-number">06</span><span class="atlas-index-name">Гравилат<small>Geum rivale</small></span><span class="atlas-index-note">Просвет и объём</span><span class="atlas-index-arrow" aria-hidden="true">↗</span></button>
+        <button class="atlas-index-row" data-open-specimen="6" data-atlas-photo="poppy"><span class="atlas-index-number">07</span><span class="atlas-index-name">Мак<small>Papaver orientale</small></span><span class="atlas-index-note">Обещание цветка</span><span class="atlas-index-arrow" aria-hidden="true">↗</span></button>
+      </div>
+      <div class="atlas-hover" aria-hidden="true" hidden><img src="assets/fern.jpg" width="800" height="1000" alt=""><span class="atlas-hover-veil"></span></div>
+      <div class="atlas-reading"><h3>Как смотреть внимательнее</h3><div class="atlas-questions">
+        <details name="atlas-reading"><summary>С чего начать?<span aria-hidden="true">+</span></summary><div class="atlas-answer"><p>Выберите одну линию и проследите её взглядом. Где она прямая, где изгибается, где исчезает в тени? Не спешите узнавать растение — сначала заметьте его жест.</p></div></details>
+        <details name="atlas-reading"><summary>Повторение или копия?<span aria-hidden="true">+</span></summary><div class="atlas-answer"><p>Сравните соседние листья, рёбра или завитки. Они похожи, но различаются размером, наклоном и расстоянием друг от друга. Именно эта небольшая разница делает ритм живым.</p></div></details>
+        <details name="atlas-reading"><summary>Почему хочется приблизиться?<span aria-hidden="true">+</span></summary><div class="atlas-answer"><p>Вблизи привычный силуэт перестаёт быть знакомым. Лепесток превращается в складку, стебель — в колонну, бутон — в маленькую скульптуру. Попробуйте увидеть целое ещё раз после детали.</p></div></details>
+      </div></div>
+      <a class="atlas-back" href="#collection">Вернуться к листам <span aria-hidden="true">↑</span></a>
     </section>
     <section class="botanical-ribbon" id="botanical-ribbon" aria-label="Имена из ботанического архива">
       <div class="ribbon-header"><span>04 / На языке природы</span><button class="ribbon-toggle" aria-pressed="false"><span class="ribbon-toggle-label">Остановить строку</span></button></div>
@@ -158,6 +205,6 @@
     <div class="viewer-image"><img src="assets/fern.jpg" alt="" width="800" height="1000"></div>
     <div class="viewer-info"><p class="viewer-number">Лист 04 / 07</p><h2 id="viewer-title">Адиантум</h2><p class="viewer-latin">Adiantum pedatum</p><p class="viewer-description"></p><dl><div><dt>Автор</dt><dd>Карл Блоссфельдт</dd></div><div><dt>Год</dt><dd>1928</dd></div><div><dt>Техника</dt><dd>Фотогравюра</dd></div></dl><a class="source-link" target="_blank" rel="noopener noreferrer" href="https://www.nga.gov/artworks/225723-adiantum-pedatum">Посмотреть в музейном архиве ↗</a><div class="viewer-navigation"><button class="viewer-prev" aria-label="Предыдущая фотография">←</button><span class="viewer-position">4 / 7</span><button class="viewer-next" aria-label="Следующая фотография">→</button></div></div>
   </dialog>
-  <dialog class="about" aria-labelledby="about-title"><button class="close-about close-button" aria-label="Закрыть описание" autofocus>×</button><p class="edition">О коллекции</p><h2 id="about-title">Природа<br>крупным планом.</h2><p>Этот небольшой кабинет объединяет семь фотографических листов Карла Блоссфельдта из издания «Urformen der Kunst» 1928 года.</p><p>Здесь можно разложить отпечатки, выбрать любой из них и рассмотреть детали. На телефоне используйте стрелки; с клавиатурой — Tab, ← и →, Enter. Escape закрывает увеличенный снимок.</p><p class="about-credit">Изображения: National Gallery of Art, Open Access. Это самостоятельный учебный этюд, не официальный сайт музея.</p><a href="https://www.nga.gov/artists/30239-karl-blossfeldt/artworks" target="_blank" rel="noopener noreferrer">Открыть коллекцию музея ↗</a></dialog>
+  <dialog class="about" aria-labelledby="about-title"><button class="close-about close-button" aria-label="Закрыть описание" autofocus>×</button><p class="edition">О коллекции</p><h2 id="about-title">Природа<br>крупным планом.</h2><p>Этот небольшой кабинет объединяет семь фотографических листов Карла Блоссфельдта из издания «Urformen der Kunst» 1928 года.</p><p>Здесь можно разложить отпечатки, выбрать любой из них и рассмотреть детали. На телефоне листайте ленту или используйте стрелки; с клавиатурой — Tab, ← и →, Enter. Escape закрывает увеличенный снимок.</p><p class="about-credit">Изображения: National Gallery of Art, Open Access. Это самостоятельный учебный этюд, не официальный сайт музея.</p><a href="https://www.nga.gov/artists/30239-karl-blossfeldt/artworks" target="_blank" rel="noopener noreferrer">Открыть коллекцию музея ↗</a></dialog>
 </body>
 </html>
