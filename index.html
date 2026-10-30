@@ -3,29 +3,33 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="application-version" content="0.9.0">
+  <meta name="application-version" content="0.10.0">
   <meta name="theme-color" content="#244653">
   <meta name="description" content="Семь фотографических наблюдений за формой растений. Интерактивный ботанический кабинет.">
   <title>Лист. — У природы свой почерк</title>
-  <script src="boot.js?v=9.0"></script>
+  <script src="boot.js?v=10.0"></script>
   <link rel="preload" href="assets/golos-regular.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/literata-regular.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/cobaea.jpg" as="image" fetchpriority="high">
-  <link rel="stylesheet" href="style.css?v=9.0">
-  <link rel="stylesheet" href="archive-navigation.css?v=9.0">
+  <link rel="stylesheet" href="style.css?v=10.0">
+  <link rel="stylesheet" href="archive-navigation.css?v=10.0">
+  <link rel="stylesheet" href="sculpture-cabinet.css?v=10.0">
   <script defer src="vendor/gsap.min.js"></script>
   <script defer src="vendor/ScrollTrigger.min.js"></script>
-  <script defer src="input-runtime.js?v=9.0"></script>
-  <script defer src="i18n.js?v=9.0"></script>
-  <script defer src="navigation.js?v=9.0"></script>
-  <script defer src="app.js?v=9.0"></script>
-  <script defer src="motion.js?v=9.0"></script>
-  <script defer src="research-motion.js?v=9.0"></script>
+  <script defer src="input-runtime.js?v=10.0"></script>
+  <script defer src="i18n.js?v=10.0"></script>
+  <script defer src="navigation.js?v=10.0"></script>
+  <script defer src="app.js?v=10.0"></script>
+  <script defer src="motion.js?v=10.0"></script>
+  <script defer src="research-motion.js?v=10.0"></script>
   <script defer src="vendor/three-r180.js"></script>
-  <script defer src="journey-path.js?v=9.0"></script>
-  <script defer src="living-hero.js?v=9.0"></script>
-  <script defer src="atlas-motion.js?v=9.0"></script>
-  <script defer src="archive-navigation.js?v=9.0"></script>
+  <script defer src="journey-path.js?v=10.0"></script>
+  <script defer src="specimen-switch.js?v=10.0"></script>
+  <script defer src="botanical-models.js?v=10.0"></script>
+  <script defer src="cabinet-controller.js?v=10.0"></script>
+  <script defer src="living-hero.js?v=10.0"></script>
+  <script defer src="atlas-motion.js?v=10.0"></script>
+  <script defer src="archive-navigation.js?v=10.0"></script>
 </head>
 <body>
   <div class="boot-screen" role="status" aria-label="Загрузка кабинета природных форм"><span class="boot-mark" aria-hidden="true">✳</span><p class="boot-title">Собираем свет и форму</p><p class="boot-caption">Готовим сцену, фотографии и шрифты.</p><span class="boot-line" aria-hidden="true"></span></div>
@@ -178,7 +182,17 @@
         <div class="atlas-stat"><span class="atlas-number-window" aria-hidden="true"><span class="atlas-number-drift"><span data-atlas-count="10">10</span></span></span><span class="atlas-stat-label">Десять лепестков скульптуры</span></div>
         <div class="atlas-stat"><span class="atlas-number-window" aria-hidden="true"><span class="atlas-number-drift"><span data-atlas-count="2">02</span></span></span><span class="atlas-stat-label">Две поверхности: серебро и бронза</span></div>
       </div>
-      <a class="dialogue-next" href="#field-index">Открыть указатель <span aria-hidden="true">↓</span></a>
+      <a class="dialogue-next" href="#sculpture-cabinet">Открыть кабинет скульптур <span aria-hidden="true">↓</span></a>
+    </section>
+    <section class="sculpture-cabinet" id="sculpture-cabinet" data-nav-tone="dark" aria-labelledby="cabinet-title" data-phase="idle" data-current-form="fern">
+      <div class="cabinet-stage">
+        <div class="cabinet-heading"><p class="edition">05 / Кабинет скульптур</p><h2 id="cabinet-title">Три формы.<br> Три характера.</h2><p>Выберите форму.<br>Посмотрите, как меняется её жест.</p></div>
+        <div class="cabinet-visual" aria-hidden="true"><img class="cabinet-fallback" src="assets/fern.jpg" width="800" height="1000" alt=""><span class="cabinet-coordinate">STUDY <span class="cabinet-study">002</span> / FORM ARCHIVE</span></div>
+        <div class="cabinet-copy" aria-busy="false"><p class="cabinet-number cabinet-copy-line"><span class="cabinet-copy-value">02 / 03 — Завиток</span></p><h3 class="cabinet-name cabinet-copy-line"><span class="cabinet-copy-value">Побеги адиантума</span></h3><p class="cabinet-latin cabinet-copy-line"><span class="cabinet-copy-value">Adiantum pedatum</span></p><p class="cabinet-description cabinet-copy-line"><span class="cabinet-copy-value">Три побега закручиваются внутрь. Линия становится спиралью и собирает движение в одной точке.</span></p><div class="cabinet-facts"><div><span>Структура</span><p class="cabinet-copy-line"><span class="cabinet-copy-value cabinet-structure">Три спирали</span></p></div><div><span>Характер</span><p class="cabinet-copy-line"><span class="cabinet-copy-value cabinet-character">Собранный жест</span></p></div></div></div>
+        <div class="cabinet-controls"><button type="button" class="cabinet-prev" aria-label="Предыдущая 3D-форма">←</button><div class="cabinet-choices" role="group" aria-label="Выбор ботанической 3D-формы"><button type="button" data-form-choice="0" aria-pressed="false">Цветок</button><button type="button" data-form-choice="1" aria-pressed="true">Завиток</button><button type="button" data-form-choice="2" aria-pressed="false">Коробочка</button></div><button type="button" class="cabinet-next-form" aria-label="Следующая 3D-форма">→</button><button type="button" class="cabinet-pause" aria-pressed="false" aria-label="Остановить вращение скульптуры">Ⅱ</button></div>
+        <a class="cabinet-continue" href="#field-index">К указателю форм <span aria-hidden="true">↓</span></a>
+        <p class="cabinet-status" role="status" aria-live="polite">Подготавливаем три скульптуры…</p><output class="cabinet-announcement" aria-live="polite" aria-atomic="true"></output>
+      </div>
     </section>
     <section class="field-index" data-nav-tone="light" id="field-index" aria-labelledby="field-index-title">
       <div class="atlas-index-heading"><h2 id="field-index-title" data-atlas-oval><span class="atlas-oval-line"><span>Указатель форм.</span></span></h2><p><span class="atlas-pointer-hint">Проведите указателем по названиям.</span><span>Выберите растение, чтобы рассмотреть лист.</span></p></div>
@@ -221,7 +235,8 @@
         <a class="menu-link" href="#observation" data-menu-photo="fern"><span class="menu-link-number">04</span><span class="menu-link-mask"><span>Внутри формы</span></span><span class="menu-link-arrow" aria-hidden="true">↗</span></a>
         <a class="menu-link" href="#field-notes" data-menu-photo="horsetail"><span class="menu-link-number">05</span><span class="menu-link-mask"><span>Полевые заметки</span></span><span class="menu-link-arrow" aria-hidden="true">↗</span></a>
         <a class="menu-link" href="#dialogue-lab" data-menu-photo="acanthus"><span class="menu-link-number">06</span><span class="menu-link-mask"><span>Диалог линий</span></span><span class="menu-link-arrow" aria-hidden="true">↗</span></a>
-        <a class="menu-link" href="#field-index" data-menu-photo="geum"><span class="menu-link-number">07</span><span class="menu-link-mask"><span>Указатель форм</span></span><span class="menu-link-arrow" aria-hidden="true">↗</span></a>
+        <a class="menu-link" href="#sculpture-cabinet" data-menu-photo="poppy"><span class="menu-link-number">07</span><span class="menu-link-mask"><span>Кабинет скульптур</span></span><span class="menu-link-arrow" aria-hidden="true">↗</span></a>
+        <a class="menu-link" href="#field-index" data-menu-photo="geum"><span class="menu-link-number">08</span><span class="menu-link-mask"><span>Указатель форм</span></span><span class="menu-link-arrow" aria-hidden="true">↗</span></a>
       </nav><div class="menu-photographs" aria-hidden="true"><div class="menu-image-column"><div class="menu-column-drift"><figure class="menu-photo" data-menu-image="cobaea"><img src="assets/cobaea.jpg" width="800" height="1000" alt=""><span aria-hidden="true">01 / 1928</span></figure><figure class="menu-photo" data-menu-image="horsetail"><img src="assets/horsetail.jpg" width="800" height="1000" alt=""><span aria-hidden="true">02 / 1928</span></figure><figure class="menu-photo" data-menu-image="geum"><img src="assets/geum.jpg" width="800" height="1000" alt=""><span aria-hidden="true">03 / 1928</span></figure></div></div><div class="menu-image-column"><div class="menu-column-drift"><figure class="menu-photo" data-menu-image="fern"><img src="assets/fern.jpg" width="800" height="1000" alt=""><span aria-hidden="true">04 / 1928</span></figure><figure class="menu-photo" data-menu-image="acanthus"><img src="assets/acanthus.jpg" width="800" height="1000" alt=""><span aria-hidden="true">05 / 1928</span></figure><figure class="menu-photo" data-menu-image="poppy"><img src="assets/poppy.jpg" width="800" height="1000" alt=""><span aria-hidden="true">06 / 1928</span></figure></div></div></div>
       <svg class="menu-branch" viewBox="0 0 400 600" fill="none" aria-hidden="true"><path d="M205 580C180 420 218 245 190 30"/><path d="M196 470C80 452 65 368 65 338C160 348 193 409 196 470"/><path d="M195 385C320 368 355 282 346 252C245 267 213 316 195 385"/><path d="M200 278C95 257 93 181 101 158C174 180 201 220 200 278"/><path d="M197 189C281 163 290 96 280 70C212 99 200 137 197 189"/></svg>
     </div>

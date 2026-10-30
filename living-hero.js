@@ -12,6 +12,8 @@
   const revealButton=host.querySelector('.living-reveal'), finishButton=host.querySelector('.living-finish'), pauseButton=host.querySelector('.living-pause');
   const bloomRange=host.querySelector('.bloom-range'), bloomValue=host.querySelector('.bloom-value'), bloomPlay=host.querySelector('.bloom-play');
   const bloomPanel=host.querySelector('.living-bloom');
+  const cabinetSection=document.querySelector('.sculpture-cabinet'),cabinetAnchor=cabinetSection.querySelector('.cabinet-visual');
+  let cabinet=null,cabinetNear=false;const gallery={active:false,x:0,y:0,size:0};
   const inputEvents=new AbortController();
   let pendingInput=null, inputSamples=0;
   const finePointer=matchMedia('(hover:hover) and (pointer:fine)');
@@ -38,7 +40,10 @@
   let bloomTimeline=null;
   function fallback(message){
     host.dataset.renderer='fallback';host.dataset.ready='false';status.dataset.localizedMessage=window.BotanicalI18n.source(message);status.textContent=message;
-    journey.classList.remove('is-enhanced');
+    journey.classList.remove('is-enhanced');cabinetSection.classList.remove('is-enhanced');
+    cabinetSection.querySelectorAll('button').forEach(button=>{button.disabled=true;});
+    cabinetSection.querySelector('.cabinet-status').dataset.localizedMessage='3D недоступна. Фотографические листы остаются доступны ниже.';
+    cabinetSection.querySelector('.cabinet-status').textContent=t('3D недоступна. Фотографические листы остаются доступны ниже.');
     intro.style.opacity='1';intro.style.transform='none';after.style.opacity='0';
     heroInterface.forEach(element=>{element.style.opacity='1';element.inert=false;});
     host.querySelector('.living-fallback').removeAttribute('aria-hidden');canvas.setAttribute('aria-hidden','true');
@@ -128,19 +133,26 @@
 
   const world=new T.Scene(), camera=new T.PerspectiveCamera(32,1,.1,30);
   camera.position.set(0,0,6.8);camera.lookAt(0,0,0);
-  const sculpture=new T.Group();world.add(sculpture);
+  const sculpture=new T.Group();world.add(sculpture);const flower=new T.Group();sculpture.add(flower);
+  const swapUniform={value:0},reverseUniform={value:0};
   const metalUniform={value:0}, wireUniform={value:0}, timeUniform={value:0};
   const metal=ownMaterial(new T.MeshPhysicalMaterial({color:0xffffff,metalness:1,roughness:.17,clearcoat:mobileGpu?0:1,clearcoatRoughness:.12,side:T.DoubleSide,envMapIntensity:1.45}));
   metal.onBeforeCompile=shader=>{
-    shader.uniforms.uFinish=metalUniform;
+    shader.uniforms.uFinish=metalUniform;shader.uniforms.uSwap=swapUniform;shader.uniforms.uSwapReverse=reverseUniform;
     shader.vertexShader='varying vec3 vSpecimen;\n'+shader.vertexShader;
-    shader.vertexShader=shader.vertexShader.replace('#include <morphtarget_vertex>','#include <morphtarget_vertex>\nvSpecimen=(modelMatrix*vec4(transformed,1.)).xyz;');
-    shader.fragmentShader='uniform float uFinish; varying vec3 vSpecimen;\n'+shader.fragmentShader;
+    shader.vertexShader=shader.vertexShader.replace('#include <morphtarget_vertex>','#include <morphtarget_vertex>\nvec4 specimenPosition=vec4(transformed,1.);\n#ifdef USE_INSTANCING\nspecimenPosition=instanceMatrix*specimenPosition;\n#endif\nvSpecimen=(modelMatrix*specimenPosition).xyz;');
+    shader.fragmentShader='uniform float uFinish,uSwap,uSwapReverse; varying vec3 vSpecimen;\n'+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );',`vec4 diffuseColor = vec4( diffuse, opacity );
       float edge=uFinish*4.6-2.3;float boundary=vSpecimen.y+sin(vSpecimen.x*3.14159)*sin(uFinish*3.14159)*.1;
       float silver=smoothstep(edge-.16,edge+.16,boundary);diffuseColor.rgb*=mix(vec3(.82,.39,.12),vec3(.78,.91,.87),silver);`);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`
+      float segment=fract((vSpecimen.x/3.6+.5)*8.);
+      float erased=1.-smoothstep(uSwap*1.2-.2,uSwap*1.2,abs(uSwapReverse-segment));
+      if(erased>.998)discard;
+      #include <opaque_fragment>
+      gl_FragColor.a*=1.-erased;`);
   };
-  metal.customProgramCacheKey=()=> 'botanical-metal-sweep-morph-v2';
+  metal.customProgramCacheKey=()=> 'botanical-metal-sweep-segment-swap-v3';
   const wireMaterial=ownMaterial(new T.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{uTime:timeUniform,uAlpha:wireUniform},vertexShader:'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec3 vP;uniform float uTime,uAlpha;void main(){float scan=pow(fract(-vP.y*10.-uTime*.4),4.);gl_FragColor=vec4(.61,.94,.79,uAlpha*(.12+scan*.75));}'}));
   function petalPoint(u,v){
     const r=.10+1.42*u, w=Math.pow(Math.max(.0001,Math.sin(Math.PI*u)),.68)*.61;
@@ -173,10 +185,10 @@
     const radial=new T.Group(), hinge=new T.Group();radial.rotation.z=(i/5)*Math.PI*2+Math.PI/2+layer*.57;
     radial.position.set(0,.25,layer*.18);radial.scale.setScalar(layer===0?1:.64);
     const mesh=new T.Mesh(petalGeo,metal),wire=new T.LineSegments(wireGeo,wireMaterial);
-    hinge.add(mesh,wire);radial.add(hinge);sculpture.add(radial);petals.push({hinge,mesh,wire,layer,index:i});
+    hinge.add(mesh,wire);radial.add(hinge);flower.add(radial);petals.push({hinge,mesh,wire,layer,index:i});
   }
-  const heart=new T.Group();heart.position.y=.25;sculpture.add(heart);
-  const calyx=new T.Mesh(ownGeometry(new T.SphereGeometry(.15,24,16)),metal);calyx.position.set(0,.25,.02);calyx.scale.z=.85;sculpture.add(calyx);
+  const heart=new T.Group();heart.position.y=.25;flower.add(heart);
+  const calyx=new T.Mesh(ownGeometry(new T.SphereGeometry(.15,24,16)),metal);calyx.position.set(0,.25,.02);calyx.scale.z=.85;flower.add(calyx);
   const core=new T.Mesh(ownGeometry(new T.SphereGeometry(.24,40,24)),metal);core.position.set(0,0,.25);core.scale.set(1,1,.65);heart.add(core);
   const beadGeo=ownGeometry(new T.SphereGeometry(.044,12,8));
   const beads=new T.InstancedMesh(beadGeo,metal,24), matrix=new T.Matrix4();
@@ -187,8 +199,10 @@
     heart.add(new T.Mesh(ownGeometry(new T.TubeGeometry(curve,12,.012,5,false)),metal));
   }heart.add(beads);
   const stemPath=new T.CatmullRomCurve3([new T.Vector3(0,.18,-.08),new T.Vector3(-.1,-.5,-.18),new T.Vector3(.1,-1.15,-.12),new T.Vector3(-.25,-1.85,-.03)]);
-  sculpture.add(new T.Mesh(ownGeometry(new T.TubeGeometry(stemPath,70,.038,9,false)),metal));
-  const leaf=new T.Mesh(petalGeo,metal);leaf.position.set(0,-1.05,-.15);leaf.rotation.set(.35,.35,-.2);leaf.scale.set(.52,.28,.5);sculpture.add(leaf);
+  flower.add(new T.Mesh(ownGeometry(new T.TubeGeometry(stemPath,70,.038,9,false)),metal));
+  const leaf=new T.Mesh(petalGeo,metal);leaf.position.set(0,-1.05,-.15);leaf.rotation.set(.35,.35,-.2);leaf.scale.set(.52,.28,.5);flower.add(leaf);
+  const {fern,poppy}=window.BotanicalModels.create({T,metal,ownGeometry,mobile:mobileGpu});
+  const modelGroups=[flower,fern,poppy];sculpture.add(fern,poppy);fern.visible=false;poppy.visible=false;
   const key=new T.DirectionalLight(0xe7f8ed,4);key.position.set(-3,5,4);world.add(key);
   const rim=new T.DirectionalLight(0x99d8df,3);rim.position.set(4,1,-3);world.add(rim);
   world.add(new T.AmbientLight(0xbfcac3,.4));
@@ -203,9 +217,9 @@
   pmrem=new T.PMREMGenerator(renderer);environmentTarget=pmrem.fromScene(studio,.03,.1,30,{size:128});world.environment=environmentTarget.texture;
 
   const placeholder=new T.DataTexture(new Uint8Array([200,200,180,255]),1,1);placeholder.needsUpdate=true;photoTexture=placeholder;
-  const uniforms={uModel:{value:null},uDye:{value:null},uPhoto:{value:photoTexture},uResolution:{value:new T.Vector2(1,1)},uCenter:{value:new T.Vector2(.66,.50)},uSize:{value:new T.Vector2(.6,.9)},uTime:{value:0},uReveal:{value:0},uScroll:{value:0},uFinish:{value:0},uPhotoReady:{value:0},uPointer:{value:new T.Vector2(.5,.5)},uHeroBounds:{value:new T.Vector2(0,1)},uTravel:{value:0},uTravelAlpha:{value:1}};
+  const uniforms={uModel:{value:null},uDye:{value:null},uPhoto:{value:photoTexture},uResolution:{value:new T.Vector2(1,1)},uCenter:{value:new T.Vector2(.66,.50)},uSize:{value:new T.Vector2(.6,.9)},uTime:{value:0},uReveal:{value:0},uScroll:{value:0},uFinish:{value:0},uPhotoReady:{value:0},uPointer:{value:new T.Vector2(.5,.5)},uHeroBounds:{value:new T.Vector2(0,1)},uTravel:{value:0},uTravelAlpha:{value:1},uCabinet:{value:0},uCabinetBounds:{value:new T.Vector2(0,0)}};
   compositor=shader(`
-    varying vec2 vUv;uniform sampler2D uModel,uDye,uPhoto;uniform vec2 uResolution,uCenter,uSize,uPointer,uHeroBounds;uniform float uTime,uReveal,uScroll,uFinish,uPhotoReady,uTravel,uTravelAlpha;
+    varying vec2 vUv;uniform sampler2D uModel,uDye,uPhoto;uniform vec2 uResolution,uCenter,uSize,uPointer,uHeroBounds,uCabinetBounds;uniform float uTime,uReveal,uScroll,uFinish,uPhotoReady,uTravel,uTravelAlpha,uCabinet;
     float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
     float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1)),f.x),f.y);}
     float fbm(vec2 p){return noise(p)*.57+noise(p*2.03+8.)*.28+noise(p*4.01+17.)*.15;}
@@ -236,11 +250,16 @@
       float vignette=1.-smoothstep(.2,1.3,length(q));color*=.73+.27*vignette;
       color+=(hash(gl_FragCoord.xy+floor(uTime*24.))-.5)*.006;
       float heroRegion=step(uHeroBounds.x,1.-uv.y)*step(1.-uv.y,uHeroBounds.y);
-      if(uTravel>.5){
+      if(uCabinet>.5){
+        float region=step(uCabinetBounds.x,1.-uv.y)*step(1.-uv.y,uCabinetBounds.y);
+        gl_FragColor=vec4(objectColor,model.a*region);
+      }else if(uTravel>.5){
         float objectAlpha=model.a*uTravelAlpha;
         gl_FragColor=vec4(color,max(heroRegion,objectAlpha));
       }else gl_FragColor=vec4(color,heroRegion);
     }`,uniforms);
+
+  cabinet=window.BotanicalCabinet.create({section:cabinetSection,g,t,Input,still:()=>reduced()||paused,layout:()=>measureScroll(),wake:()=>{drawOnce();start();}});
 
   function resize(){
     if(disposed)return;
@@ -276,23 +295,26 @@
     scrollProgress=reduced()?0:clamp(-rect.top/Math.max(1,host.offsetHeight-stage.offsetHeight));
     const heroTop=Math.max(0,rect.top,stageRect.top)/height, heroBottom=Math.min(height,rect.bottom,stageRect.bottom)/height;
     uniforms.uHeroBounds.value.set(heroTop,Math.max(heroTop-.001,heroBottom));
+    const cabinetBox=cabinetSection.getBoundingClientRect(),modelBox=cabinetAnchor.getBoundingClientRect();
+    gallery.active=cabinetBox.top<height&&cabinetBox.bottom>0;gallery.x=modelBox.left+modelBox.width*.5;gallery.y=modelBox.top+modelBox.height*.5;gallery.size=modelBox.width*1.18;
+    const cabinetTop=Math.max(0,cabinetBox.top)/height,cabinetBottom=Math.min(height,cabinetBox.bottom)/height;uniforms.uCabinetBounds.value.set(cabinetTop,Math.max(cabinetTop-.001,cabinetBottom));
     const localScroll=scrollY-travel.top;travel.bottom=travel.top+travel.height-scrollY;
     travel.p=clamp(localScroll/Math.max(1,travel.height-height));travel.bridge=clamp((localScroll+height)/height);
     travel.active=!!Path&&!reduced()&&localScroll>=-height&&travel.bottom>0;
     // Anchor jumps may leave the world before the next RAF / IO callback.
     // Hide the last framebuffer immediately so it cannot cover later sections.
-    canvas.style.visibility=(heroBottom>heroTop||travel.active)?'visible':'hidden';
+    canvas.style.visibility=(heroBottom>heroTop||travel.active||gallery.active)?'visible':'hidden';
     if(travel.active)bloomTimeline?.pause();
     else if(!paused&&!reduced()&&inView&&!document.hidden)bloomTimeline?.resume();
     journey.dataset.progress=travel.p.toFixed(4);journey.dataset.bridge=travel.bridge.toFixed(4);
     meter.style.transform=`scaleX(${travel.p})`;percentage.textContent=`${Math.round(travel.p*100)}%`;
-    canvas.dataset.scene=travel.active?'journey':'hero';
+    canvas.dataset.scene=gallery.active?'cabinet':travel.active?'journey':'hero';
     host.dataset.scrollProgress=scrollProgress.toFixed(3);
     const p=scrollProgress, fade=1-clamp(p/.33);
     intro.style.opacity=String(fade);intro.style.transform=`translateY(${-p*120}px)`;
     const visible=clamp((p-.4)/.25);after.style.opacity=String(visible);after.style.transform=`translateY(${(1-visible)*30}px)`;after.setAttribute('aria-hidden',String(visible<.5));
     rule.style.transform=`scaleX(${p})`;
-    if(paused||reduced())drawOnce();
+    if(paused||reduced()||!raf)drawOnce();
   }
   function setReveal(){
     const value=locked||hovering?1:0;
@@ -392,13 +414,22 @@
       rx=Path.lerp(rx,tilt-(1-bloom)*.84,b);ry=Path.lerp(ry,Path.lerp(Math.PI/2.2-1.15,Math.PI*4,turn),b);rz=Path.lerp(rz,0,b);
       journey.dataset.modelX=x.toFixed(1);journey.dataset.modelY=y.toFixed(1);journey.dataset.modelSize=size.toFixed(1);journey.dataset.bloom=bloom.toFixed(3);journey.dataset.finish=finish.toFixed(3);
     }
+    if(gallery.active){
+      cabinet.update(dt,animate);bloom=1;finish=state.finish;
+      uniforms.uCenter.value.set(gallery.x/width,1-gallery.y/height);uniforms.uSize.value.set(gallery.size/width,gallery.size/height);
+      rx=cabinet.current===2?.32:.10;ry=cabinet.pose.rotation+cabinet.pose.angle;rz=0;
+    }
+    modelGroups.forEach((model,i)=>{model.visible=i===(gallery.active?cabinet.current:0);});
+    const modelId=gallery.active?cabinet.forms[cabinet.current].id:'flower';if(canvas.dataset.form!==modelId)canvas.dataset.form=modelId;
+    swapUniform.value=gallery.active?cabinet.pose.wipe:0;reverseUniform.value=cabinet.pose.reverse;
+    uniforms.uCabinet.value=gallery.active?1:0;cabinetSection.dataset.wipe=cabinet.pose.wipe.toFixed(3);cabinetSection.dataset.rotation=cabinet.pose.rotation.toFixed(4);
     sculpture.rotation.set(rx,ry,rz);
-    sculpture.position.y=Math.sin(clock*.5)*.025;
+    sculpture.position.y=gallery.active?0:Math.sin(clock*.5)*.025;
     petals.forEach(({hinge,mesh,wire,layer,index})=>{
       const progress=clamp((bloom-layer*.14-index*.018)/(1-layer*.14-index*.018));
       const open=progress*progress*(3-2*progress);
       const breath=(layer===0?1:-1)*.035*Math.sin(clock*.45+(layer*5+index)*.35)*open;
-      mesh.morphTargetInfluences[0]=1-open;wire.visible=!mobileGpu&&open>.99;
+      mesh.morphTargetInfluences[0]=1-open;wire.visible=!gallery.active&&!mobileGpu&&open>.99;
       hinge.rotation.y=breath;
       hinge.rotation.x=(1-open)*.11*Math.sin(index*2.4);
     });
@@ -409,7 +440,7 @@
     uniforms.uPointer.value.set(pointer.easeX*.5+.5,pointer.easeY*.5+.5);
     if(animate){
       const now=performance.now(),timeout=firstInput?2000:2500;
-      if(!travel.active&&now-lastInput>timeout&&!locked&&!hovering&&p<.35){
+      if(!gallery.active&&!travel.active&&now-lastInput>timeout&&!locked&&!hovering&&p<.35){
         const t=((now-lastInput-timeout)/1000)%9.5;
         const progress=t<2.5?t/2.5:t<4?1:t<6.5?1-(t-4)/2.5:0;
         const x=uniforms.uCenter.value.x-Math.cos(progress*4*Math.PI)*uniforms.uSize.value.x*.27;
@@ -421,18 +452,19 @@
           simulation.inject(x,y,idlePointer?(x-idlePointer.x):0,idlePointer?(y-idlePointer.y):0,strength);idlePointer={x,y};host.dataset.input='idle';
         }
       }
-      if(!travel.active&&!locked&&state.reveal<.999&&p<.45)simulation.step(dt);
+      if(!gallery.active&&!travel.active&&!locked&&state.reveal<.999&&p<.45)simulation.step(dt);
     }
     uniforms.uDye.value=simulation.dye.read.texture;
   }
   function render(animate,dt=.014){
     if(disposed||!simulation||!modelTarget)return;
-    updateScene(dt,animate);renderer.setRenderTarget(modelTarget);renderer.clear();renderer.render(world,camera);pass(compositor,null);
+    updateScene(dt,animate);renderer.setRenderTarget(modelTarget);renderer.clear();renderer.render(world,camera);
+    const modelCalls=renderer.info.render.calls,modelTriangles=renderer.info.render.triangles;pass(compositor,null);
     frames++;
     const now=performance.now();
-    if(now-statTime>1000){host.dataset.fps=((frames-lastStatFrames)*1000/(now-statTime)).toFixed(1);host.dataset.frames=String(frames);host.dataset.reveal=state.reveal.toFixed(2);host.dataset.finish=state.finish.toFixed(2);lastStatFrames=frames;statTime=now;}
+    if(now-statTime>1000){host.dataset.fps=((frames-lastStatFrames)*1000/(now-statTime)).toFixed(1);host.dataset.frames=String(frames);host.dataset.reveal=state.reveal.toFixed(2);host.dataset.finish=state.finish.toFixed(2);lastStatFrames=frames;statTime=now;if(gallery.active){cabinetSection.dataset.drawCalls=String(modelCalls);cabinetSection.dataset.triangles=String(modelTriangles);}cabinetSection.dataset.frames=String(frames);cabinetSection.dataset.gpuGeometries=String(renderer.info.memory.geometries);cabinetSection.dataset.programs=String(renderer.info.programs.length);}
   }
-  function drawOnce(){if(!disposed&&inView&&!document.hidden&&(paused||reduced()||!raf))render(false);}
+  function drawOnce(){if(!disposed&&inView&&!document.hidden&&!document.body.classList.contains('modal-open')&&(paused||reduced()||!raf))render(false);}
   function tick(time){
     raf=0;if(disposed||paused||reduced()||!inView||document.hidden)return;
     if(document.body.classList.contains('modal-open')){lastTime=0;raf=requestAnimationFrame(tick);return;}
@@ -441,20 +473,21 @@
   }
   function start(){if(!warming&&!raf&&!disposed&&!paused&&!reduced()&&inView&&!document.hidden){if(!travel.active)bloomTimeline?.resume();lastTime=0;raf=requestAnimationFrame(tick);}}
   function preference(){
+    if(reduced())cabinet?.settle();
     journey.classList.toggle('is-enhanced',!!Path&&!reduced());
     if(reduced()){cancelAnimationFrame(raf);raf=0;stopBloom();g?.killTweensOf(state);state.finish=bronze?1:0;revealButton.disabled=true;pauseButton.disabled=true;}
     else{revealButton.disabled=false;pauseButton.disabled=false;setReveal();}
     syncBloom();resize();start();
   }
   const visibility=new IntersectionObserver(entries=>{
-    entries.forEach(entry=>{if(entry.target===host)heroNear=entry.isIntersecting;else journeyNear=entry.isIntersecting;});
-    inView=heroNear||journeyNear;host.dataset.visible=String(heroNear);journey.dataset.visible=String(journeyNear);
+    entries.forEach(entry=>{if(entry.target===host)heroNear=entry.isIntersecting;else if(entry.target===journey)journeyNear=entry.isIntersecting;else cabinetNear=entry.isIntersecting;});
+    inView=heroNear||journeyNear||cabinetNear;host.dataset.visible=String(heroNear);journey.dataset.visible=String(journeyNear);
     if(inView){drawOnce();start();}else{cancelAnimationFrame(raf);raf=0;bloomTimeline?.pause();}
-  },{rootMargin:'150px 0px'});visibility.observe(host);visibility.observe(journey);
+  },{rootMargin:'150px 0px'});visibility.observe(host);visibility.observe(journey);visibility.observe(cabinetSection);
   const preferences=new MutationObserver(preference);preferences.observe(document.documentElement,{attributes:true,attributeFilter:['data-reduced']});
   systemReduced.addEventListener('change',preference);
   let scrollFrame=0;
-  const onScroll=()=>{if(!scrollFrame)scrollFrame=requestAnimationFrame(()=>{scrollFrame=0;measureScroll();});};
+  const onScroll=()=>{if(!scrollFrame)scrollFrame=requestAnimationFrame(()=>{scrollFrame=0;measureScroll();start();});};
   const onResize=()=>{
     if(canvas.clientWidth===width&&canvas.clientHeight===height&&stage.clientHeight===stageHeight)return;
     clearTimeout(resizeTimer);resizeTimer=setTimeout(resize,120);
@@ -465,19 +498,19 @@
     if(disposed)return;
     host.querySelector('.living-reveal-label').textContent=t(locked?'Вернуть фотографию':'Проявить цветок');
     pauseButton.setAttribute('aria-label',t(paused?'Продолжить движение цветка':'Остановить движение цветка'));
-    syncBloom();resize();
+    cabinet.syncLanguage();syncBloom();resize();
   };
   addEventListener('botanical:languagechange',onLanguage);addEventListener('botanical:layout',resize);
   const onVisibility=()=>{if(document.hidden){pendingInput=null;cancelAnimationFrame(raf);raf=0;bloomTimeline?.pause();}else start();};document.addEventListener('visibilitychange',onVisibility);
   function dispose(){
-    if(disposed)return;inputEvents.abort();cancelAnimationFrame(scrollFrame);disposed=true;cancelAnimationFrame(raf);clearTimeout(resizeTimer);stopBloom();g?.killTweensOf(state);
+    if(disposed)return;cabinet?.dispose();inputEvents.abort();cancelAnimationFrame(scrollFrame);disposed=true;cancelAnimationFrame(raf);clearTimeout(resizeTimer);stopBloom();g?.killTweensOf(state);
     visibility.disconnect();preferences.disconnect();systemReduced.removeEventListener('change',preference);
     removeEventListener('botanical:languagechange',onLanguage);removeEventListener('botanical:layout',resize);removeEventListener('scroll',onScroll);removeEventListener('resize',onResize);document.removeEventListener('visibilitychange',onVisibility);
     targets.forEach(t=>t.dispose());materials.forEach(m=>m.dispose());geometries.forEach(geo=>geo.dispose());photoTexture.dispose();environmentTarget.dispose();pmrem.dispose();renderer.dispose();
   }
   canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();cancelAnimationFrame(raf);raf=0;fallback(t('3D-контекст остановлен. Фотографическая версия остаётся доступной.'));dispose();});
   canvas.addEventListener('webglcontextrestored',()=>{status.textContent=t('Обновите страницу, чтобы снова открыть 3D-форму.');});
-  addEventListener('pagehide',event=>{if(event.persisted){cancelAnimationFrame(raf);raf=0;bloomTimeline?.pause();}else dispose();});
+  addEventListener('pagehide',event=>{if(event.persisted){cabinet?.settle();cancelAnimationFrame(raf);raf=0;bloomTimeline?.pause();}else dispose();});
   addEventListener('pageshow',event=>{if(event.persisted){resize();start();}});
   async function prepare(){
     try{
@@ -489,9 +522,11 @@
       // Upload geometry/textures and warm every shader path before the visitor
       // can scroll: model, compositor, fluid advection, curl and pressure passes.
       await renderer.compileAsync(world,camera);if(disposed)return;
+      // Compile and upload every form while the startup screen is still visible.
+      for(let i=0;i<modelGroups.length;i++){modelGroups.forEach((model,index)=>{model.visible=index===i;});renderer.setRenderTarget(modelTarget);renderer.clear();renderer.render(world,camera);}
       preference();simulation.inject(.5,.5,0,0,0);simulation.step(1/60);simulation.all.forEach(clear);
       render(false);renderer.getContext().finish();
-      warming=false;host.dataset.ready='true';host.querySelector('.living-fallback').setAttribute('aria-hidden','true');status.textContent='';canvas.classList.add('is-ready');
+      warming=false;cabinet.ready();host.dataset.ready='true';host.querySelector('.living-fallback').setAttribute('aria-hidden','true');status.textContent='';canvas.classList.add('is-ready');
       performance.mark('botanical-scene-warmed');window.BotanicalBoot?.sceneReady('webgl');start();
     }catch(error){if(!disposed){fallback(t('Фотографический режим: 3D-сцену не удалось запустить.'));dispose();}}
   }
