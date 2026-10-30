@@ -249,7 +249,22 @@ const messages={
   "Шесть завитков, шесть разных жестов. Ещё не раскрывшиеся побеги напоминают свитки — каждый со своим характером.": "Six curls, six different gestures. The unopened shoots resemble scrolls, each with a character of its own.",
   "Два листа повёрнуты по-разному. Складки собирают свет и тень, превращая плоскость в скульптуру.": "Two leaves turned in different directions. Their folds gather light and shadow, turning a plane into a sculpture.",
   "Тонкие стенки изгибаются, оставляя просветы. Продольные линии и арки превращают небольшую форму в почти архитектурный объём.": "Thin walls curve around open spaces. Lengthwise lines and arches turn a small form into an almost architectural volume.",
-  "Бутон ещё закрыт. Плотная оболочка, тонкие волоски и выступающие края делают его поверхность удивительно сложной.": "The bud is still closed. Its dense shell, fine hairs and projecting edges give its surface a remarkable complexity."
+  "Бутон ещё закрыт. Плотная оболочка, тонкие волоски и выступающие края делают его поверхность удивительно сложной.": "The bud is still closed. Its dense shell, fine hairs and projecting edges give its surface a remarkable complexity.",
+  "Вернуться к портфолио": "Back to portfolio",
+  "Открыть меню разделов": "Open section menu",
+  "Закрыть меню разделов": "Close section menu",
+  "Разделы": "Sections",
+  "Архив / Разделы": "Archive / Sections",
+  "Закрыть": "Close",
+  "Разделы ботанического архива": "Botanical archive sections",
+  "Живая форма": "Living form",
+  "Фотографические листы": "Photographic plates",
+  "Коллекция листов": "Photographic plates",
+  "Внутри формы": "Within the form",
+  "Полевые заметки": "Field notes",
+  "Диалог линий": "A dialogue of lines",
+  "Указатель форм": "Index of forms",
+  "Семь листов. Один язык линий.": "Seven plates. One language of lines."
 };
 const root=document.documentElement,reverse=new Map(Object.entries(messages).map(([ru,en])=>[en,ru]));
 const textRecords=new WeakMap(),attributeRecords=new WeakMap();

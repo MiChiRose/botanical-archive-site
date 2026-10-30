@@ -3,27 +3,29 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="application-version" content="0.8.0">
+  <meta name="application-version" content="0.9.0">
   <meta name="theme-color" content="#244653">
   <meta name="description" content="Семь фотографических наблюдений за формой растений. Интерактивный ботанический кабинет.">
   <title>Лист. — У природы свой почерк</title>
-  <script src="boot.js?v=8.0"></script>
+  <script src="boot.js?v=9.0"></script>
   <link rel="preload" href="assets/golos-regular.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/literata-regular.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/cobaea.jpg" as="image" fetchpriority="high">
-  <link rel="stylesheet" href="style.css?v=8.0">
+  <link rel="stylesheet" href="style.css?v=9.0">
+  <link rel="stylesheet" href="archive-navigation.css?v=9.0">
   <script defer src="vendor/gsap.min.js"></script>
   <script defer src="vendor/ScrollTrigger.min.js"></script>
-  <script defer src="input-runtime.js?v=8.0"></script>
-  <script defer src="i18n.js?v=8.0"></script>
-  <script defer src="navigation.js?v=8.0"></script>
-  <script defer src="app.js?v=8.0"></script>
-  <script defer src="motion.js?v=8.0"></script>
-  <script defer src="research-motion.js?v=8.0"></script>
+  <script defer src="input-runtime.js?v=9.0"></script>
+  <script defer src="i18n.js?v=9.0"></script>
+  <script defer src="navigation.js?v=9.0"></script>
+  <script defer src="app.js?v=9.0"></script>
+  <script defer src="motion.js?v=9.0"></script>
+  <script defer src="research-motion.js?v=9.0"></script>
   <script defer src="vendor/three-r180.js"></script>
-  <script defer src="journey-path.js?v=8.0"></script>
-  <script defer src="living-hero.js?v=8.0"></script>
-  <script defer src="atlas-motion.js?v=8.0"></script>
+  <script defer src="journey-path.js?v=9.0"></script>
+  <script defer src="living-hero.js?v=9.0"></script>
+  <script defer src="atlas-motion.js?v=9.0"></script>
+  <script defer src="archive-navigation.js?v=9.0"></script>
 </head>
 <body>
   <div class="boot-screen" role="status" aria-label="Загрузка кабинета природных форм"><span class="boot-mark" aria-hidden="true">✳</span><p class="boot-title">Собираем свет и форму</p><p class="boot-caption">Готовим сцену, фотографии и шрифты.</p><span class="boot-line" aria-hidden="true"></span></div>
@@ -33,10 +35,11 @@
     <span class="masthead-note">Кабинет природных форм</span>
     <div class="language-switch" role="group" aria-label="Язык сайта"><button type="button" data-language="ru" lang="ru" aria-label="Русский" aria-pressed="true">RU</button><span aria-hidden="true">/</span><button type="button" data-language="en" lang="en" aria-label="English" aria-pressed="false">EN</button></div>
     <button class="text-button about-button" data-about><span data-roll>Об этой коллекции</span> <span aria-hidden="true">↗</span></button>
+    <button class="menu-toggle" type="button" aria-controls="archive-menu" aria-haspopup="dialog" aria-expanded="false" aria-label="Открыть меню разделов"><span>Разделы</span><span class="menu-toggle-icon" aria-hidden="true"><i></i><i></i></span></button>
   </header>
   <div class="viewport-probe" aria-hidden="true"></div>
   <main>
-    <section class="living-hero" id="living-form" aria-labelledby="living-title" data-renderer="loading">
+    <section class="living-hero" data-nav-tone="dark" id="living-form" aria-labelledby="living-title" data-renderer="loading">
       <div class="living-stage">
         <img class="living-fallback" src="assets/cobaea.jpg" alt="Фотографический лист с цветком кобеи" width="800" height="1000">
         <canvas class="living-canvas" role="img" aria-label="Интерактивная скульптура цветка: движение указателя проявляет металлические лепестки"></canvas>
@@ -56,21 +59,21 @@
       </div>
     </section>
     <section class="form-journey" id="form-journey" aria-label="Путь формы: от бутона к скульптуре">
-      <article class="journey-chapter" id="form-bud">
+      <article class="journey-chapter" data-nav-tone="dark" id="form-bud">
         <div class="journey-copy"><span class="journey-phase">Бутон / 01</span><h2>Всё начинается<br>с изгиба.</h2><p>Лепестки ещё собраны. Будущая форма уже существует — ей осталось раскрыться.</p><a class="journey-next" href="#form-open">Проследить раскрытие <span aria-hidden="true">↓</span></a></div>
         <figure class="journey-anchor" data-journey-anchor="0"><img src="assets/poppy.jpg" width="800" height="1000" alt="Закрытый бутон мака — исходная природная форма"><figcaption>Собранная форма</figcaption></figure>
       </article>
-      <article class="journey-chapter journey-chapter-light" id="form-open">
+      <article class="journey-chapter journey-chapter-light" data-nav-tone="light" id="form-open">
         <figure class="journey-anchor" data-journey-anchor="1"><img src="assets/cobaea.jpg" width="800" height="1000" alt="Раскрытые лепестки цветка кобеи"><figcaption>Движение лепестков</figcaption></figure>
         <div class="journey-copy"><span class="journey-phase">Раскрытие / 02</span><h2>Один цветок.<br>Десять движений.</h2><p>Сначала внешние лепестки. Затем внутренние. Каждый поворот меняет силуэт целого.</p><a class="journey-next" href="#form-light">Посмотреть с другой стороны <span aria-hidden="true">↓</span></a></div>
       </article>
-      <article class="journey-chapter journey-chapter-bronze" id="form-light">
+      <article class="journey-chapter journey-chapter-bronze" data-nav-tone="dark" id="form-light">
         <div class="journey-copy"><span class="journey-phase">Поверхность / 03</span><h2>Форма остаётся.<br>Свет меняет всё.</h2><p>Холодное серебро становится тёплой бронзой. Отражения скользят по тем же изгибам.</p><a class="journey-next" href="#collection">К фотографическим листам <span aria-hidden="true">↓</span></a></div>
         <figure class="journey-anchor" data-journey-anchor="2"><img src="assets/geum.jpg" width="800" height="1000" alt="Фактурная поверхность чашечки гравилата"><figcaption>Свет на поверхности</figcaption></figure>
       </article>
       <div class="journey-meter" aria-hidden="true"><span>Путь формы</span><span class="journey-meter-line"><i></i></span><span class="journey-percent">0%</span></div>
     </section>
-    <section class="collection" id="collection" aria-labelledby="page-title">
+    <section class="collection" data-nav-tone="dark" id="collection" aria-labelledby="page-title">
       <div class="intro">
         <p class="edition">Семь наблюдений / Карл Блоссфельдт, 1928</p>
         <h2 class="archive-title" id="page-title" data-reveal><span class="line-mask"><span>У природы</span></span><span class="line-mask"><span>свой почерк.</span></span></h2>
@@ -122,7 +125,7 @@
       </div>
       <div class="mobile-picker" aria-label="Выбор листа"><button class="picker-prev" aria-label="Предыдущий лист">←</button><span class="picker-position">4 / 7</span><button class="picker-open">Рассмотреть</button><button class="picker-next" aria-label="Следующий лист">→</button></div>
     </section>
-    <section class="observation" id="observation" aria-label="Присмотритесь к форме папоротника">
+    <section class="observation" data-nav-tone="light" id="observation" aria-label="Присмотритесь к форме папоротника">
       <div class="observation-sticky">
         <div class="observation-copy">
           <p class="edition">02 / Внутри формы</p>
@@ -139,7 +142,7 @@
         <span class="scroll-note" aria-hidden="true">Листайте медленно <span>↓</span></span>
       </div>
     </section>
-    <section class="field-notes" id="field-notes" aria-labelledby="notes-title">
+    <section class="field-notes" data-nav-tone="dark" id="field-notes" aria-labelledby="notes-title">
       <div class="notes-sticky">
         <div class="notes-heading"><p class="edition">03 / Полевые заметки</p><h2 id="notes-title" data-reveal><span class="line-mask"><span>Увидеть знакомое</span></span><span class="line-mask"><span>впервые.</span></span></h2><p>Не искать объяснение.<br>Просто дать взгляду задержаться.</p></div>
         <div class="notes-viewport"><div class="notes-grid">
@@ -150,7 +153,7 @@
         <div class="notes-controls"><span class="notes-direction">Листайте вниз — смотрите дальше <span aria-hidden="true">→</span></span><div class="notes-dots" aria-label="Перейти к наблюдению"><button data-note="0" aria-label="Первое наблюдение: Ритм" aria-pressed="true">01</button><button data-note="1" aria-label="Второе наблюдение: Складка" aria-pressed="false">02</button><button data-note="2" aria-label="Третье наблюдение: Контур" aria-pressed="false">03</button></div><a href="#dialogue-lab" class="notes-skip" data-roll>К диалогу линий ↓</a></div>
       </div>
     </section>
-    <section class="dialogue-lab" id="dialogue-lab" aria-labelledby="dialogue-title">
+    <section class="dialogue-lab" data-nav-tone="dark" id="dialogue-lab" aria-labelledby="dialogue-title">
       <div class="dialogue-heading">
         <span class="dialogue-intro">Два способа быть живым</span>
         <h2 id="dialogue-title" data-atlas-oval><span class="atlas-oval-line"><span>Строгий ритм.</span></span><span class="atlas-oval-line"><span>Свободный жест.</span></span></h2>
@@ -177,7 +180,7 @@
       </div>
       <a class="dialogue-next" href="#field-index">Открыть указатель <span aria-hidden="true">↓</span></a>
     </section>
-    <section class="field-index" id="field-index" aria-labelledby="field-index-title">
+    <section class="field-index" data-nav-tone="light" id="field-index" aria-labelledby="field-index-title">
       <div class="atlas-index-heading"><h2 id="field-index-title" data-atlas-oval><span class="atlas-oval-line"><span>Указатель форм.</span></span></h2><p><span class="atlas-pointer-hint">Проведите указателем по названиям.</span><span>Выберите растение, чтобы рассмотреть лист.</span></p></div>
       <div class="atlas-index-list" aria-label="Все семь растений">
         <button class="atlas-index-row" data-open-specimen="0" data-atlas-photo="horsetail"><span class="atlas-index-number">01</span><span class="atlas-index-name">Хвощ<small>Equisetum hiemale</small></span><span class="atlas-index-note">Ритм ярусов</span><span class="atlas-index-arrow" aria-hidden="true">↗</span></button>
@@ -196,18 +199,34 @@
       </div></div>
       <a class="atlas-back" href="#collection">Вернуться к листам <span aria-hidden="true">↑</span></a>
     </section>
-    <section class="botanical-ribbon" id="botanical-ribbon" aria-label="Имена из ботанического архива">
+    <section class="botanical-ribbon" data-nav-tone="light" id="botanical-ribbon" aria-label="Имена из ботанического архива">
       <div class="ribbon-header"><span>04 / На языке природы</span><button class="ribbon-toggle" aria-pressed="false"><span class="ribbon-toggle-label">Остановить строку</span></button></div>
       <div class="ribbon-window"><div class="ribbon-drift"><div class="ribbon-collection"><span>Adiantum</span><i aria-hidden="true">✳</i><span>Equisetum</span><i aria-hidden="true">✳</i><span>Papaver</span><i aria-hidden="true">✳</i><span>Acanthus</span><i aria-hidden="true">✳</i></div></div></div>
       <p class="ribbon-caption">Разные имена. Один язык линий.</p>
     </section>
-    <section class="colophon" aria-labelledby="colophon-title">
+    <section class="colophon" data-nav-tone="dark" id="colophon" aria-labelledby="colophon-title">
       <div class="colophon-heading"><span class="small-star" aria-hidden="true">✳</span><h2 id="colophon-title">Замедлиться.<br>Увидеть больше.</h2></div>
       <p>Семь фотогравюр из «Urformen der Kunst». Растения здесь становятся скульптурами — достаточно приблизиться.</p>
       <div class="colophon-source"><span>Фотографии — Карл Блоссфельдт</span><a href="https://www.nga.gov/artists/30239-karl-blossfeldt/artworks" target="_blank" rel="noopener noreferrer">Коллекция National Gallery of Art ↗</a><span class="study-note">Независимый интерактивный этюд</span></div>
     </section>
   </main>
-  <footer><span>лист. / архив форм</span><button class="motion-toggle" aria-pressed="false">Спокойный режим <span class="toggle-track" aria-hidden="true"><i></i></span></button></footer>
+  <footer><span>лист. / архив форм</span><button class="motion-toggle" aria-pressed="false">Спокойный режим <span class="toggle-track" aria-hidden="true"><i></i></span></button><a class="portfolio-back" href="https://michirose.github.io"><span data-roll>Вернуться к портфолио</span><span aria-hidden="true">↗</span></a></footer>
+  <dialog class="archive-menu" id="archive-menu" aria-labelledby="menu-title" data-state="closed">
+    <div class="menu-shade" aria-hidden="true"></div>
+    <div class="menu-header"><a class="menu-brand" href="#living-form" aria-label="Лист. На главную">лист<span>.</span></a><span class="menu-edition" id="menu-title">Архив / Разделы</span><div class="menu-language" role="group" aria-label="Язык сайта"><button type="button" data-language="ru" lang="ru" aria-pressed="true">RU</button><span aria-hidden="true">/</span><button type="button" data-language="en" lang="en" aria-pressed="false">EN</button></div><button class="menu-close" type="button" aria-label="Закрыть меню разделов" aria-controls="archive-menu"><span>Закрыть</span><span class="menu-toggle-icon" aria-hidden="true"><i></i><i></i></span></button></div>
+    <div class="menu-body"><nav class="menu-links" aria-label="Разделы ботанического архива">
+        <a class="menu-link" href="#living-form" data-menu-photo="cobaea"><span class="menu-link-number">01</span><span class="menu-link-mask"><span>Живая форма</span></span><span class="menu-link-arrow" aria-hidden="true">↗</span></a>
+        <a class="menu-link" href="#form-journey" data-menu-photo="poppy"><span class="menu-link-number">02</span><span class="menu-link-mask"><span>Путь формы</span></span><span class="menu-link-arrow" aria-hidden="true">↗</span></a>
+        <a class="menu-link" href="#collection" data-menu-photo="fern"><span class="menu-link-number">03</span><span class="menu-link-mask"><span>Коллекция листов</span></span><span class="menu-link-arrow" aria-hidden="true">↗</span></a>
+        <a class="menu-link" href="#observation" data-menu-photo="fern"><span class="menu-link-number">04</span><span class="menu-link-mask"><span>Внутри формы</span></span><span class="menu-link-arrow" aria-hidden="true">↗</span></a>
+        <a class="menu-link" href="#field-notes" data-menu-photo="horsetail"><span class="menu-link-number">05</span><span class="menu-link-mask"><span>Полевые заметки</span></span><span class="menu-link-arrow" aria-hidden="true">↗</span></a>
+        <a class="menu-link" href="#dialogue-lab" data-menu-photo="acanthus"><span class="menu-link-number">06</span><span class="menu-link-mask"><span>Диалог линий</span></span><span class="menu-link-arrow" aria-hidden="true">↗</span></a>
+        <a class="menu-link" href="#field-index" data-menu-photo="geum"><span class="menu-link-number">07</span><span class="menu-link-mask"><span>Указатель форм</span></span><span class="menu-link-arrow" aria-hidden="true">↗</span></a>
+      </nav><div class="menu-photographs" aria-hidden="true"><div class="menu-image-column"><div class="menu-column-drift"><figure class="menu-photo" data-menu-image="cobaea"><img src="assets/cobaea.jpg" width="800" height="1000" alt=""><span aria-hidden="true">01 / 1928</span></figure><figure class="menu-photo" data-menu-image="horsetail"><img src="assets/horsetail.jpg" width="800" height="1000" alt=""><span aria-hidden="true">02 / 1928</span></figure><figure class="menu-photo" data-menu-image="geum"><img src="assets/geum.jpg" width="800" height="1000" alt=""><span aria-hidden="true">03 / 1928</span></figure></div></div><div class="menu-image-column"><div class="menu-column-drift"><figure class="menu-photo" data-menu-image="fern"><img src="assets/fern.jpg" width="800" height="1000" alt=""><span aria-hidden="true">04 / 1928</span></figure><figure class="menu-photo" data-menu-image="acanthus"><img src="assets/acanthus.jpg" width="800" height="1000" alt=""><span aria-hidden="true">05 / 1928</span></figure><figure class="menu-photo" data-menu-image="poppy"><img src="assets/poppy.jpg" width="800" height="1000" alt=""><span aria-hidden="true">06 / 1928</span></figure></div></div></div>
+      <svg class="menu-branch" viewBox="0 0 400 600" fill="none" aria-hidden="true"><path d="M205 580C180 420 218 245 190 30"/><path d="M196 470C80 452 65 368 65 338C160 348 193 409 196 470"/><path d="M195 385C320 368 355 282 346 252C245 267 213 316 195 385"/><path d="M200 278C95 257 93 181 101 158C174 180 201 220 200 278"/><path d="M197 189C281 163 290 96 280 70C212 99 200 137 197 189"/></svg>
+    </div>
+    <div class="menu-footer"><button type="button" class="menu-about" data-menu-about>Об этой коллекции <span aria-hidden="true">↗</span></button><a href="https://michirose.github.io" class="menu-portfolio">Вернуться к портфолио <span aria-hidden="true">↗</span></a><span class="menu-footnote">Семь листов. Один язык линий.</span></div>
+  </dialog>
   <dialog class="viewer" aria-labelledby="viewer-title">
     <button class="close-button" aria-label="Закрыть фотографию" autofocus>×</button>
     <div class="viewer-image"><img src="assets/fern.jpg" alt="" width="800" height="1000"></div>
